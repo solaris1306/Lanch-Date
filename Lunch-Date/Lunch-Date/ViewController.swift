@@ -115,18 +115,8 @@ private extension ViewController {
                 if freeTeamMembers.count == 2 {
                     let firstTeamMember = freeTeamMembers[0]
                     let secondTeamMember = freeTeamMembers[1]
-                    var currentCount = freeTeamMembers.count
                     freeTeamMembers.removeAll(where: { $0 == firstTeamMember })
-                    var newCount = freeTeamMembers.count
-                    if currentCount == newCount {
-                        print("\(firstTeamMember.name) is not removed.")
-                    }
-                    currentCount = freeTeamMembers.count
                     freeTeamMembers.removeAll(where: { $0 == secondTeamMember })
-                    newCount = freeTeamMembers.count
-                    if currentCount == newCount {
-                        print("\(secondTeamMember.name) is not removed.")
-                    }
                     firstTeamMember.availableLunchPartners.removeAll(where: { $0 == secondTeamMember })
                     secondTeamMember.availableLunchPartners.removeAll(where: { $0 == firstTeamMember })
                     let oneTeam = LunchTeam(firstEmployee: firstTeamMember,
@@ -137,18 +127,8 @@ private extension ViewController {
                     let firstTeamMember = freeTeamMembers[firstTeamMemberIndex]
                     let secondTeamMemberIndex = firstTeamMember.availableLunchPartners.count > 1 ? Int.random(in: 0..<firstTeamMember.availableLunchPartners.count) : 0
                     let secondTeamMember = firstTeamMember.availableLunchPartners[secondTeamMemberIndex]
-                    var currentCount = freeTeamMembers.count
                     freeTeamMembers.removeAll(where: { $0 == firstTeamMember })
-                    var newCount = freeTeamMembers.count
-                    if currentCount == newCount {
-                        print("\(firstTeamMember.name) is not removed.")
-                    }
-                    currentCount = freeTeamMembers.count
                     freeTeamMembers.removeAll(where: { $0 == secondTeamMember })
-                    newCount = freeTeamMembers.count
-                    if currentCount == newCount {
-                        print("\(secondTeamMember.name) is not removed.")
-                    }
                     firstTeamMember.availableLunchPartners.removeAll(where: { $0 == secondTeamMember })
                     secondTeamMember.availableLunchPartners.removeAll(where: { $0 == firstTeamMember })
                     let oneTeam = LunchTeam(firstEmployee: firstTeamMember,
