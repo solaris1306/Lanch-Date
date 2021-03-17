@@ -22,25 +22,16 @@ enum TableCellNames: String {
 
 class Employees {
     public static let employeesNames: [String] = ["Ivana", "Tim", "Jasmin", "Nicol", "Mark", "Max", "Jan", "Maria", "Fin", "Jessica"]
-//    public static let employeesNames: [String] = ["Ivana", "Tim", "Jasmin", "Nicol"]
 }
 
 class Employee: Equatable {
     // MARK: - Public properties
     let name: String
-    var availableLunchPartners: [Employee] = []
-//    var unavailableLunchPartners: [Employee] = []
+    var unavailableLunchPartners: Set<String> = []
     
     // MARK: - Initialization
     init(name: String) {
         self.name = name
-    }
-    
-    // MARK: - Methods
-    func setNewAvailableLunchPartners(lunchPartners: [Employee]) {
-        var newLunchPartners = lunchPartners
-        newLunchPartners.removeAll(where: { $0 == self })
-        availableLunchPartners = newLunchPartners
     }
     
     // MARK: - Equatable
@@ -75,6 +66,15 @@ class ViewController: UIViewController {
         
         tableView.register(LunchTeamCell.self, forCellReuseIdentifier: TableCellNames.lunchTeamCell.rawValue)
         
+        tableView.dataSource = self
+        tableView.delegate = self
+        
+        self.view.addSubview(tableView)
+        tableView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        
         allEmployees = getAllEmployees()
     }
     
@@ -89,9 +89,6 @@ private extension ViewController {
         for employeeName in Employees.employeesNames {
             let newEmployee = Employee(name: employeeName)
             allEmployees.append(newEmployee)
-        }
-        for employee in allEmployees {
-            employee.setNewAvailableLunchPartners(lunchPartners: allEmployees)
         }
         
         return allEmployees
@@ -110,27 +107,35 @@ private extension ViewController {
         for _ in 0...allEmployees.count - 2 {
             var oneLunchDay: [LunchTeam] = []
             var freeTeamMembers: [Employee] = allEmployees
-//            var busyTeamMembers: [Employee] = []
+            var freeTeamMemberNames: Set<String> = Set(Employees.employeesNames)
+            for employee in allEmployees {
+                employee.unavailableLunchPartners = [employee.name]
+            }
             while freeTeamMembers.count > 0 {
                 if freeTeamMembers.count == 2 {
                     let firstTeamMember = freeTeamMembers[0]
                     let secondTeamMember = freeTeamMembers[1]
                     freeTeamMembers.removeAll(where: { $0 == firstTeamMember })
                     freeTeamMembers.removeAll(where: { $0 == secondTeamMember })
-                    firstTeamMember.availableLunchPartners.removeAll(where: { $0 == secondTeamMember })
-                    secondTeamMember.availableLunchPartners.removeAll(where: { $0 == firstTeamMember })
+                    freeTeamMemberNames.remove(firstTeamMember.name)
+                    freeTeamMemberNames.remove(secondTeamMember.name)
+                    firstTeamMember.unavailableLunchPartners.insert(secondTeamMember.name)
+                    secondTeamMember.unavailableLunchPartners.insert(firstTeamMember.name)
                     let oneTeam = LunchTeam(firstEmployee: firstTeamMember,
                                             secondEmployee: secondTeamMember)
                     oneLunchDay.append(oneTeam)
                 } else {
                     let firstTeamMemberIndex = Int.random(in: 0..<freeTeamMembers.count)
                     let firstTeamMember = freeTeamMembers[firstTeamMemberIndex]
-                    let secondTeamMemberIndex = firstTeamMember.availableLunchPartners.count > 1 ? Int.random(in: 0..<firstTeamMember.availableLunchPartners.count) : 0
-                    let secondTeamMember = firstTeamMember.availableLunchPartners[secondTeamMemberIndex]
+                    let availableNames: [String] = freeTeamMemberNames.subtracting(firstTeamMember.unavailableLunchPartners).map { $0 }
+                    let secondTeamMemberName = availableNames.count > 1 ? Int.random(in: 0..<availableNames.count) : 0
+                    let secondTeamMember = freeTeamMembers.first(where: { $0.name == availableNames[secondTeamMemberName] })
                     freeTeamMembers.removeAll(where: { $0 == firstTeamMember })
                     freeTeamMembers.removeAll(where: { $0 == secondTeamMember })
-                    firstTeamMember.availableLunchPartners.removeAll(where: { $0 == secondTeamMember })
-                    secondTeamMember.availableLunchPartners.removeAll(where: { $0 == firstTeamMember })
+                    freeTeamMemberNames.remove(firstTeamMember.name)
+                    freeTeamMemberNames.remove(secondTeamMember!.name)
+                    firstTeamMember.unavailableLunchPartners.insert(secondTeamMember!.name)
+                    secondTeamMember?.unavailableLunchPartners.insert(firstTeamMember.name)
                     let oneTeam = LunchTeam(firstEmployee: firstTeamMember,
                                             secondEmployee: secondTeamMember)
                     oneLunchDay.append(oneTeam)
@@ -158,8 +163,13 @@ extension ViewController: UITableViewDataSource {
             return UITableViewCell()
         }
         let oneTeam: LunchTeam = lunch.lunchTeams[indexPath.section][indexPath.row]
-        cell.firstEmployeeNameLabel.text = oneTeam.firstEmployee?.name
-        cell.secondEmployeeNameLabel.text = oneTeam.secondEmployee?.name
+        cell.teamLabel.text = oneTeam.firstEmployee!.name + " - " + oneTeam.secondEmployee!.name
         return cell
+    }
+}
+
+extension ViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        return "DAY \(section + 1)"
     }
 }

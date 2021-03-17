@@ -9,25 +9,11 @@ import UIKit
 
 class LunchTeamCell: UITableViewCell {
     // MARK: - Properties
-    let firstEmployeeNameLabel: UILabel = {
+    let teamLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.backgroundColor = .white
-        return label
-    }()
-    
-    let secondEmployeeNameLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.backgroundColor = .white
-        return label
-    }()
-    
-    let centerSeparatorLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.backgroundColor = .white
-        label.text = "-"
+        label.textAlignment = .center
         return label
     }()
     
@@ -53,28 +39,16 @@ class LunchTeamCell: UITableViewCell {
 // MARK: - Setup subviews
 private extension LunchTeamCell {
     func setupSubviews() {
-        addSubview(firstEmployeeNameLabel)
-        addSubview(secondEmployeeNameLabel)
-        addSubview(centerSeparatorLabel)
+        addSubview(teamLabel)
         addSubview(separatorView)
         setupSubviewsConstraints()
     }
     
     func setupSubviewsConstraints() {
-        centerSeparatorLabel.centerXAnchor.constraint(equalTo: centerXAnchor).isActive = true
-        centerSeparatorLabel.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
-        
-        firstEmployeeNameLabel.topAnchor.constraint(greaterThanOrEqualTo: topAnchor, constant: 10.0).isActive = true
-        firstEmployeeNameLabel.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
-        firstEmployeeNameLabel.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -10.0).isActive = true
-        firstEmployeeNameLabel.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
-        firstEmployeeNameLabel.trailingAnchor.constraint(equalTo: centerSeparatorLabel.leadingAnchor).isActive = true
-        
-        secondEmployeeNameLabel.topAnchor.constraint(greaterThanOrEqualTo: topAnchor, constant: 10.0).isActive = true
-        secondEmployeeNameLabel.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
-        secondEmployeeNameLabel.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -10.0).isActive = true
-        secondEmployeeNameLabel.leadingAnchor.constraint(equalTo: centerSeparatorLabel.trailingAnchor).isActive = true
-        secondEmployeeNameLabel.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
+        teamLabel.topAnchor.constraint(equalTo: topAnchor, constant: 10.0).isActive = true
+        teamLabel.bottomAnchor.constraint(equalTo: separatorView.topAnchor, constant: -10.0).isActive = true
+        teamLabel.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
+        teamLabel.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
         
         separatorView.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
         separatorView.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
