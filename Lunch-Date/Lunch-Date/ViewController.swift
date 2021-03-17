@@ -9,7 +9,7 @@ import UIKit
 
 class ViewController: UIViewController {
     // MARK: - Private properties
-    let employeeNames: [String] = ["Ivana", "Tim", "Jasmin", "Nicol", "Mark", "Max"]
+    let employeeNames: [String] = ["Ivana", "Tim", "Jasmin", "Nicol", "Mark", "Max", "Jan", "Valerie", "Nina", "Felix"]
     
     var lunch = Lunch() {
         didSet {
@@ -24,16 +24,6 @@ class ViewController: UIViewController {
         return tableView
     }()
     
-    let button: UIButton = {
-        let button = UIButton()
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.backgroundColor = .white
-        button.setTitleColor(.blue, for: .normal)
-        button.setTitle("Test", for: .normal)
-        button.addTarget(self, action: #selector(testFunction), for: .touchUpInside)
-        return button
-    }()
-    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,14 +33,8 @@ class ViewController: UIViewController {
         tableView.dataSource = self
         tableView.delegate = self
         
-        view.addSubview(button)
-        button.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-        button.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
-        button.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        button.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        
         view.addSubview(tableView)
-        tableView.topAnchor.constraint(equalTo: button.bottomAnchor).isActive = true
+        tableView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
         tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
         tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
@@ -79,7 +63,7 @@ extension ViewController: UITableViewDataSource {
             return UITableViewCell()
         }
         let oneTeam: Lunch.LunchTeam = lunch.shownLunchTeams[indexPath.section][indexPath.row]
-        cell.teamLabel.text = oneTeam.firstEmployee.name + " - " + oneTeam.secondEmployee.name
+        cell.teamLabel.text = oneTeam.firstEmployee + " - " + oneTeam.secondEmployee
         return cell
     }
 }

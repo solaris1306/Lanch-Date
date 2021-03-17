@@ -10,9 +10,6 @@
 		AC9D2ACD26020E5200C2A50A /* Lunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2ACC26020E5200C2A50A /* Lunch.swift */; };
 		AC9D2ACE26020E5200C2A50A /* Lunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2ACC26020E5200C2A50A /* Lunch.swift */; };
 		AC9D2ACF26020E5200C2A50A /* Lunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2ACC26020E5200C2A50A /* Lunch.swift */; };
-		AC9D2AD82602112E00C2A50A /* Employee.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2AD72602112E00C2A50A /* Employee.swift */; };
-		AC9D2AD92602112E00C2A50A /* Employee.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2AD72602112E00C2A50A /* Employee.swift */; };
-		AC9D2ADA2602112E00C2A50A /* Employee.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2AD72602112E00C2A50A /* Employee.swift */; };
 		ACC26C112601483B009DA011 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC26C102601483B009DA011 /* AppDelegate.swift */; };
 		ACC26C132601483B009DA011 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC26C122601483B009DA011 /* SceneDelegate.swift */; };
 		ACC26C152601483B009DA011 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC26C142601483B009DA011 /* ViewController.swift */; };
@@ -46,7 +43,6 @@
 
 /* Begin PBXFileReference section */
 		AC9D2ACC26020E5200C2A50A /* Lunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lunch.swift; sourceTree = "<group>"; };
-		AC9D2AD72602112E00C2A50A /* Employee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Employee.swift; sourceTree = "<group>"; };
 		ACC26C0D2601483B009DA011 /* Lunch-Date.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lunch-Date.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACC26C102601483B009DA011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACC26C122601483B009DA011 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -98,14 +94,6 @@
 			path = Structures;
 			sourceTree = "<group>";
 		};
-		AC9D2AD62602111D00C2A50A /* Classes */ = {
-			isa = PBXGroup;
-			children = (
-				AC9D2AD72602112E00C2A50A /* Employee.swift */,
-			);
-			path = Classes;
-			sourceTree = "<group>";
-		};
 		ACC26C042601483B009DA011 = {
 			isa = PBXGroup;
 			children = (
@@ -132,7 +120,6 @@
 				ACC26C102601483B009DA011 /* AppDelegate.swift */,
 				ACC26C122601483B009DA011 /* SceneDelegate.swift */,
 				ACC26C142601483B009DA011 /* ViewController.swift */,
-				AC9D2AD62602111D00C2A50A /* Classes */,
 				AC9D2ACB26020E3A00C2A50A /* Structures */,
 				ACC26C46260148A0009DA011 /* UITableViewCells */,
 				ACC26C162601483B009DA011 /* Main.storyboard */,
@@ -303,7 +290,6 @@
 				ACC26C152601483B009DA011 /* ViewController.swift in Sources */,
 				ACC26C48260148C0009DA011 /* LunchTeamCell.swift in Sources */,
 				ACC26C112601483B009DA011 /* AppDelegate.swift in Sources */,
-				AC9D2AD82602112E00C2A50A /* Employee.swift in Sources */,
 				ACC26C1B2601483B009DA011 /* Lunch_Date.xcdatamodeld in Sources */,
 				AC9D2ACD26020E5200C2A50A /* Lunch.swift in Sources */,
 				ACC26C132601483B009DA011 /* SceneDelegate.swift in Sources */,
@@ -315,7 +301,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACC26C2B2601483E009DA011 /* Lunch_DateTests.swift in Sources */,
-				AC9D2AD92602112E00C2A50A /* Employee.swift in Sources */,
 				AC9D2ACE26020E5200C2A50A /* Lunch.swift in Sources */,
 				ACC26C49260148C0009DA011 /* LunchTeamCell.swift in Sources */,
 			);
@@ -326,7 +311,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACC26C362601483E009DA011 /* Lunch_DateUITests.swift in Sources */,
-				AC9D2ADA2602112E00C2A50A /* Employee.swift in Sources */,
 				AC9D2ACF26020E5200C2A50A /* Lunch.swift in Sources */,
 				ACC26C4A260148C0009DA011 /* LunchTeamCell.swift in Sources */,
 			);
