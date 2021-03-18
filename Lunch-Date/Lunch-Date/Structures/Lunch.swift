@@ -20,7 +20,7 @@ struct Lunch {
         }
     }
     var shownLunchTeams: [[LunchTeam]] = []
-    var employeeNames: [String] = [] {
+    var employees: [Employee] = [] {
         didSet {
             getNewLunchSchedule()
         }
@@ -29,23 +29,23 @@ struct Lunch {
     // MARK: - Methods
     mutating func getNewLunchSchedule() {
         var newLunchTeams: [[LunchTeam]] = []
-        var newEmployeeNames: [String] = employeeNames
+        var newEmployees: [Employee] = employees
         
-        guard newEmployeeNames.count > 2 && newEmployeeNames.count % 2 == 0 else {
-            if newEmployeeNames.count == 2 {
-                let oneTeam = LunchTeam(firstEmployee: newEmployeeNames[0],
-                                        secondEmployee: newEmployeeNames[1])
+        guard newEmployees.count > 2 && newEmployees.count % 2 == 0 else {
+            if newEmployees.count == 2 {
+                let oneTeam = LunchTeam(firstEmployee: newEmployees[0].name,
+                                        secondEmployee: newEmployees[1].name)
                 lunchTeams = [[oneTeam]]
             }
             return
         }
         
-        newEmployeeNames.shuffle()
-        let newCount: Int = newEmployeeNames.count / 2
-        var firstHalfArray = Array(newEmployeeNames[0...newCount - 1])
-        var secondHalfArray = Array(newEmployeeNames[newCount...newEmployeeNames.count - 1])
+        newEmployees.shuffle()
+        let newCount: Int = newEmployees.count / 2
+        var firstHalfArray = Array(newEmployees[0...newCount - 1])
+        var secondHalfArray = Array(newEmployees[newCount...newEmployees.count - 1])
         
-        for i in 0...newEmployeeNames.count - 2 {
+        for i in 0...newEmployees.count - 2 {
             var oneLunchDay: [LunchTeam] = []
             if i > 0 {
                 let lastOfFirst = firstHalfArray.removeLast()
@@ -54,8 +54,8 @@ struct Lunch {
                 secondHalfArray.append(lastOfFirst)
             }
             for j in 0...newCount - 1 {
-                let firstEmployee: String = firstHalfArray[j]
-                let secondEmployee: String = secondHalfArray[j]
+                let firstEmployee: String = firstHalfArray[j].name
+                let secondEmployee: String = secondHalfArray[j].name
                 let oneTeam = LunchTeam(firstEmployee: firstEmployee,
                                         secondEmployee: secondEmployee)
                 oneLunchDay.append(oneTeam)

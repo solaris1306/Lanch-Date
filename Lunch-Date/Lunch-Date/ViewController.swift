@@ -9,11 +9,21 @@ import UIKit
 
 class ViewController: UIViewController {
     // MARK: - Private properties
-    let employeeNames: [String] = ["Ivana", "Tim", "Jasmin", "Nicol", "Mark", "Max", "Jan", "Valerie", "Nina", "Felix"]
-    
-    var lunch = Lunch() {
+    private var employees: [Employee] = [] {
         didSet {
-            tableView.reloadData()
+            lunch.employees = employees
+        }
+    }
+    
+    private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
+    
+    private var lunch = Lunch() {
+        didSet {
+            DispatchQueue.main.async { [weak self] in
+                if let self = self {
+                    self.tableView.reloadData()
+                }
+            }
         }
     }
     
@@ -34,18 +44,40 @@ class ViewController: UIViewController {
         tableView.delegate = self
         
         view.addSubview(tableView)
-        tableView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-        tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
         tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
-        lunch.employeeNames = employeeNames
+        fetchEmployees(from: employeesUrlString)
     }
     
-    @objc func testFunction() {
-        lunch.employeeNames = ["Ivana", "Tim", "Jasmin", "Nicol", "Mark", "Max"]
+}
+
+// MARK: - Private methods
+private extension ViewController {
+    func fetchEmployees(from urlString: String) {
+        guard let safeURL = URL(string: urlString) else {
+            employees = Employee.placeholderEmployees
+            return
+        }
+        let urlRequest = URLRequest(url: safeURL)
+        URLSession.shared.dataTask(with: urlRequest) { [weak self] (data, _, error) in
+            if let self = self {
+                guard error == nil, let safeData = data else {
+                    self.employees = Employee.placeholderEmployees
+                    return
+                }
+                do {
+                    let newEmployees = try JSONDecoder().decode([Employee].self, from: safeData)
+                    print(newEmployees)
+                    self.employees = newEmployees
+                } catch {
+                    
+                }
+            }
+        }.resume()
     }
-    
 }
 
 // MARK: - UITableViewDataSource
@@ -66,11 +98,12 @@ extension ViewController: UITableViewDataSource {
         cell.teamLabel.text = oneTeam.firstEmployee + " - " + oneTeam.secondEmployee
         return cell
     }
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        return "DAY \(section + 1)"
+    }
 }
 
 // MARK: - UITableViewDelegate
 extension ViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return "DAY \(section + 1)"
-    }
+    
 }
