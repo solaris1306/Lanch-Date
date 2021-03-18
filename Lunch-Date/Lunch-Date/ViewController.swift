@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class ViewController: UIViewController {
     // MARK: - Private properties
@@ -16,14 +17,11 @@ class ViewController: UIViewController {
     }
     
     private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
+    private var subscriptions = Set<AnyCancellable>()
     
     private var lunch = Lunch() {
         didSet {
-            DispatchQueue.main.async { [weak self] in
-                if let self = self {
-                    self.tableView.reloadData()
-                }
-            }
+            self.tableView.reloadData()
         }
     }
     
@@ -49,52 +47,29 @@ class ViewController: UIViewController {
         tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
-        fetchEmployees(from: employeesUrlString)
+        lunch.employeePublisher
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.employees, on: self)
+            .store(in: &subscriptions)
     }
     
-}
-
-// MARK: - Private methods
-private extension ViewController {
-    func fetchEmployees(from urlString: String) {
-        guard let safeURL = URL(string: urlString) else {
-            employees = Employee.placeholderEmployees
-            return
-        }
-        let urlRequest = URLRequest(url: safeURL)
-        URLSession.shared.dataTask(with: urlRequest) { [weak self] (data, _, error) in
-            if let self = self {
-                guard error == nil, let safeData = data else {
-                    self.employees = Employee.placeholderEmployees
-                    return
-                }
-                do {
-                    let newEmployees = try JSONDecoder().decode([Employee].self, from: safeData)
-                    print(newEmployees)
-                    self.employees = newEmployees
-                } catch {
-                    
-                }
-            }
-        }.resume()
-    }
 }
 
 // MARK: - UITableViewDataSource
 extension ViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return lunch.shownLunchTeams.count
+        return lunch.shownLunchDays.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return lunch.shownLunchTeams[section].count
+        return lunch.shownLunchDays[section].lunchTeams.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: String(describing: LunchTeamCell.self), for: indexPath) as? LunchTeamCell else {
             return UITableViewCell()
         }
-        let oneTeam: Lunch.LunchTeam = lunch.shownLunchTeams[indexPath.section][indexPath.row]
+        let oneTeam: Lunch.LunchTeam = lunch.shownLunchDays[indexPath.section].lunchTeams[indexPath.row]
         cell.teamLabel.text = oneTeam.firstEmployee + " - " + oneTeam.secondEmployee
         return cell
     }
