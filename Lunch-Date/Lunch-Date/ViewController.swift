@@ -12,6 +12,7 @@ class ViewController: UIViewController {
     // MARK: - Private properties
     private var lunch = Lunch()
     private var subscriptions = Set<AnyCancellable>()
+    private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
     
     private let tableView: UITableView = {
         let tableView = UITableView()
@@ -34,6 +35,18 @@ class ViewController: UIViewController {
         tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
         tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        
+        lunch.employeesUrlString = employeesUrlString
+        
+        lunch.$currentlyShownLunchInformations
+            .sink(receiveValue: { _ in
+                DispatchQueue.main.async { [weak self] in
+                    if let self = self {
+                        self.tableView.reloadData()
+                    }
+                }
+            })
+            .store(in: &subscriptions)
     }
     
 }
@@ -41,18 +54,18 @@ class ViewController: UIViewController {
 // MARK: - UITableViewDataSource
 extension ViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return lunch.shownLunchDays.count
+        return lunch.currentlyShownLunchInformations.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return lunch.shownLunchDays[section].lunchTeams.count
+        return lunch.currentlyShownLunchInformations[section].lunchTeams.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: String(describing: LunchTeamCell.self), for: indexPath) as? LunchTeamCell else {
             return UITableViewCell()
         }
-        let oneTeam: Lunch.LunchTeam = lunch.shownLunchDays[indexPath.section].lunchTeams[indexPath.row]
+        let oneTeam: Lunch.LunchTeam = lunch.currentlyShownLunchInformations[indexPath.section].lunchTeams[indexPath.row]
         cell.teamLabel.text = oneTeam.firstEmployee + " - " + oneTeam.secondEmployee
         return cell
     }

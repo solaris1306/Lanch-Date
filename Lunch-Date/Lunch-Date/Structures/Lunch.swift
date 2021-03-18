@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-struct Lunch {
+class Lunch: ObservableObject {
     // MARK: - Helper structures
     struct LunchTeam {
         var firstEmployee: String
@@ -21,90 +21,119 @@ struct Lunch {
     }
     
     // MARK: - Properties
-    private var lunchDays: [LunchDay] = []
+    // MARK: - Published properties
+    @Published var employeesUrlString: String = ""
+    @Published var employees: [Employee] = []
+    @Published var currentlyShownLunchInformations: [LunchDay] = []
+    @Published var filterString: String? = nil
+    @Published var showActivityIndicatorView = false
     
+    // MARK: - Private properties
+    private var lunchDays: [LunchDay] = []
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd:MM:YYYY"
         return formatter
     }()
+    private var subscriptions = Set<AnyCancellable>()
     
-    private static let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
-    
-    var shownLunchDays: [LunchDay] = []
-    var employees: [Employee] = []
-    
-    let currentEmployeesUrlStringValuePublisher = CurrentValueSubject<String, Never>(employeesUrlString)
-    var employeePublisher: AnyPublisher<[Employee], Never>  {
-        currentEmployeesUrlStringValuePublisher
-        .map { (urlString) -> AnyPublisher<[Employee], Never> in
-            let url = URL(string: urlString)
-            let publisher: AnyPublisher<[Employee], Error>
-            if let safeUrl = url {
-                publisher = URLSession.shared.dataTaskPublisher(for: safeUrl)
-                    .map(\.data)
-                    .decode(type: [Employee].self, decoder: JSONDecoder())
-                    .eraseToAnyPublisher()
-            } else {
-                publisher = Fail<[Employee], Error>(error: URLError(.badURL))
+    // MARK: - Initialization
+    required init() {
+        $employeesUrlString
+            .map { (urlString) -> AnyPublisher<[Employee], Never> in
+                let url = URL(string: urlString)
+                let publisher: AnyPublisher<[Employee], Error>
+                if let safeUrl = url {
+                    publisher = URLSession.shared.dataTaskPublisher(for: safeUrl)
+                        .map(\.data)
+                        .decode(type: [Employee].self, decoder: JSONDecoder())
                         .eraseToAnyPublisher()
+                } else {
+                    publisher = Fail<[Employee], Error>(error: URLError(.badURL))
+                            .eraseToAnyPublisher()
+                }
+                return publisher
+                    .replaceEmpty(with: Employee.placeholderEmployees)
+                    .replaceError(with: Employee.placeholderEmployees)
+                    .eraseToAnyPublisher()
             }
-            return publisher
-                .replaceEmpty(with: Employee.placeholderEmployees)
-                .replaceError(with: Employee.placeholderEmployees)
+            .flatMap({ $0 })
+            .eraseToAnyPublisher()
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.employees, on: self)
+            .store(in: &subscriptions)
+        
+        var lunchesPublisher: AnyPublisher<[LunchDay], Never> {
+            $employees
+                .map { [weak self] (employees) -> [LunchDay] in
+                    guard let self = self else { return [] }
+                    var newLunchTeams: [LunchDay] = []
+                    var newEmployees: [Employee] = employees
+                    
+                    let currentDate: Date = Date()
+                    var dateComponents = DateComponents()
+                    
+                    guard newEmployees.count > 2 && newEmployees.count % 2 == 0 else {
+                        if newEmployees.count == 2 {
+                            let oneTeam = LunchTeam(firstEmployee: newEmployees[0].name,
+                                                    secondEmployee: newEmployees[1].name)
+                            let lunchDay = LunchDay(lunchTeams: [oneTeam],
+                                                    date: self.dateFormatter.string(from: currentDate))
+                            return [lunchDay]
+                        }
+                        return []
+                    }
+                    
+                    newEmployees.shuffle()
+                    let newCount: Int = newEmployees.count / 2
+                    var firstHalfArray = Array(newEmployees[0...newCount - 1])
+                    var secondHalfArray = Array(newEmployees[newCount...newEmployees.count - 1])
+                    
+                    for i in 0...newEmployees.count - 2 {
+                        var oneLunchDayTeams: [LunchTeam] = []
+                        if i > 0 {
+                            let lastOfFirst = firstHalfArray.removeLast()
+                            let firstOfSecond = secondHalfArray.removeFirst()
+                            firstHalfArray.insert(firstOfSecond, at: 1)
+                            secondHalfArray.append(lastOfFirst)
+                        }
+                        for j in 0...newCount - 1 {
+                            let firstEmployee: String = firstHalfArray[j].name
+                            let secondEmployee: String = secondHalfArray[j].name
+                            let oneTeam = LunchTeam(firstEmployee: firstEmployee,
+                                                    secondEmployee: secondEmployee)
+                            oneLunchDayTeams.append(oneTeam)
+                        }
+                        oneLunchDayTeams.shuffle()
+                        
+                        dateComponents.day = i
+                        let futureDate = Calendar.current.date(byAdding: dateComponents, to: currentDate) ?? Date()
+                        let oneLunchDay = LunchDay(lunchTeams: oneLunchDayTeams,
+                                                   date: self.dateFormatter.string(from: futureDate))
+                        newLunchTeams.append(oneLunchDay)
+                    }
+                    return newLunchTeams
+                }
                 .eraseToAnyPublisher()
         }
-        .flatMap({ $0 })
-        .eraseToAnyPublisher()
+        
+        lunchesPublisher
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.lunchDays, on: self)
+            .store(in: &subscriptions)
+        
+        lunchesPublisher.combineLatest($filterString) { (lunchDays, filterString) -> [LunchDay] in
+            guard let safeFilterString = filterString else { return lunchDays }
+            return lunchDays.map { (lunchDay) -> LunchDay in
+                let newTeams: [LunchTeam] = lunchDay.lunchTeams.filter({ $0.firstEmployee == safeFilterString || $0.secondEmployee == safeFilterString })
+                return LunchDay(lunchTeams: newTeams,
+                                date: lunchDay.date)
+            }
+        }
+        .receive(on: DispatchQueue.main)
+        .assign(to: \.currentlyShownLunchInformations, on: self)
+        .store(in: &subscriptions)
     }
     
     // MARK: - Methods
-    mutating func getNewLunchSchedule() {
-        var newLunchTeams: [LunchDay] = []
-        var newEmployees: [Employee] = employees
-        
-        let currentDate: Date = Date()
-        var dateComponents = DateComponents()
-        
-        guard newEmployees.count > 2 && newEmployees.count % 2 == 0 else {
-            if newEmployees.count == 2 {
-                let oneTeam = LunchTeam(firstEmployee: newEmployees[0].name,
-                                        secondEmployee: newEmployees[1].name)
-                let lunchDay = LunchDay(lunchTeams: [oneTeam],
-                                        date: dateFormatter.string(from: currentDate))
-                lunchDays = [lunchDay]
-            }
-            return
-        }
-        
-        newEmployees.shuffle()
-        let newCount: Int = newEmployees.count / 2
-        var firstHalfArray = Array(newEmployees[0...newCount - 1])
-        var secondHalfArray = Array(newEmployees[newCount...newEmployees.count - 1])
-        
-        for i in 0...newEmployees.count - 2 {
-            var oneLunchDayTeams: [LunchTeam] = []
-            if i > 0 {
-                let lastOfFirst = firstHalfArray.removeLast()
-                let firstOfSecond = secondHalfArray.removeFirst()
-                firstHalfArray.insert(firstOfSecond, at: 1)
-                secondHalfArray.append(lastOfFirst)
-            }
-            for j in 0...newCount - 1 {
-                let firstEmployee: String = firstHalfArray[j].name
-                let secondEmployee: String = secondHalfArray[j].name
-                let oneTeam = LunchTeam(firstEmployee: firstEmployee,
-                                        secondEmployee: secondEmployee)
-                oneLunchDayTeams.append(oneTeam)
-            }
-            oneLunchDayTeams.shuffle()
-            
-            dateComponents.day = i
-            let futureDate = Calendar.current.date(byAdding: dateComponents, to: currentDate) ?? Date()
-            let oneLunchDay = LunchDay(lunchTeams: oneLunchDayTeams,
-                                       date: dateFormatter.string(from: futureDate))
-            newLunchTeams.append(oneLunchDay)
-        }
-        lunchDays = newLunchTeams
-    }
 }
