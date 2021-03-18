@@ -21,11 +21,7 @@ struct Lunch {
     }
     
     // MARK: - Properties
-    private var lunchDays: [LunchDay] = [] {
-        didSet {
-            shownLunchDays = lunchDays
-        }
-    }
+    private var lunchDays: [LunchDay] = []
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -36,11 +32,7 @@ struct Lunch {
     private static let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
     
     var shownLunchDays: [LunchDay] = []
-    var employees: [Employee] = [] {
-        didSet {
-            getNewLunchSchedule()
-        }
-    }
+    var employees: [Employee] = []
     
     let currentEmployeesUrlStringValuePublisher = CurrentValueSubject<String, Never>(employeesUrlString)
     var employeePublisher: AnyPublisher<[Employee], Never>  {

@@ -10,20 +10,8 @@ import Combine
 
 class ViewController: UIViewController {
     // MARK: - Private properties
-    private var employees: [Employee] = [] {
-        didSet {
-            lunch.employees = employees
-        }
-    }
-    
-    private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
+    private var lunch = Lunch()
     private var subscriptions = Set<AnyCancellable>()
-    
-    private var lunch = Lunch() {
-        didSet {
-            self.tableView.reloadData()
-        }
-    }
     
     private let tableView: UITableView = {
         let tableView = UITableView()
@@ -46,11 +34,6 @@ class ViewController: UIViewController {
         tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
         tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        
-        lunch.employeePublisher
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.employees, on: self)
-            .store(in: &subscriptions)
     }
     
 }
