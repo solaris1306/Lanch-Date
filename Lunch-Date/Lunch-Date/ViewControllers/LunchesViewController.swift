@@ -1,14 +1,14 @@
 //
-//  ViewController.swift
+//  LunchesViewController.swift
 //  Lunch-Date
 //
-//  Created by Aleksandar Adzic on 16.3.21..
+//  Created by Aleksandar Adzic on 19.3.21..
 //
 
 import UIKit
 import Combine
 
-class ViewController: UIViewController {
+class LunchesViewController: UIViewController {
     // MARK: - Private properties
     private var lunch = Lunch()
     private var subscriptions = Set<AnyCancellable>()
@@ -58,7 +58,7 @@ class ViewController: UIViewController {
 }
 
 // MARK: - UITableViewDataSource
-extension ViewController: UITableViewDataSource {
+extension LunchesViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
         return lunch.currentlyShownLunchInformations.count
     }
@@ -82,6 +82,6 @@ extension ViewController: UITableViewDataSource {
 }
 
 // MARK: - UITableViewDelegate
-extension ViewController: UITableViewDelegate {
+extension LunchesViewController: UITableViewDelegate {
     
 }

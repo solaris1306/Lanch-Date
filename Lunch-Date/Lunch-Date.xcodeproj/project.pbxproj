@@ -13,13 +13,14 @@
 		AC69391D2604BB050014402B /* FilterCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC69391C2604BB050014402B /* FilterCell.swift */; };
 		AC69391E2604BB050014402B /* FilterCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC69391C2604BB050014402B /* FilterCell.swift */; };
 		AC69391F2604BB050014402B /* FilterCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC69391C2604BB050014402B /* FilterCell.swift */; };
+		AC6939252604BC420014402B /* LunchesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6939242604BC420014402B /* LunchesViewController.swift */; };
+		AC6939262604BC420014402B /* LunchesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6939242604BC420014402B /* LunchesViewController.swift */; };
+		AC6939272604BC420014402B /* LunchesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6939242604BC420014402B /* LunchesViewController.swift */; };
 		AC9D2ACD26020E5200C2A50A /* Lunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2ACC26020E5200C2A50A /* Lunch.swift */; };
 		AC9D2ACE26020E5200C2A50A /* Lunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2ACC26020E5200C2A50A /* Lunch.swift */; };
 		AC9D2ACF26020E5200C2A50A /* Lunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2ACC26020E5200C2A50A /* Lunch.swift */; };
 		ACC26C112601483B009DA011 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC26C102601483B009DA011 /* AppDelegate.swift */; };
 		ACC26C132601483B009DA011 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC26C122601483B009DA011 /* SceneDelegate.swift */; };
-		ACC26C152601483B009DA011 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC26C142601483B009DA011 /* ViewController.swift */; };
-		ACC26C182601483B009DA011 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = ACC26C162601483B009DA011 /* Main.storyboard */; };
 		ACC26C1B2601483B009DA011 /* Lunch_Date.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = ACC26C192601483B009DA011 /* Lunch_Date.xcdatamodeld */; };
 		ACC26C1D2601483E009DA011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ACC26C1C2601483E009DA011 /* Assets.xcassets */; };
 		ACC26C202601483E009DA011 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = ACC26C1E2601483E009DA011 /* LaunchScreen.storyboard */; };
@@ -50,12 +51,11 @@
 /* Begin PBXFileReference section */
 		AC4AD1EB2603482B0092419A /* Employee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Employee.swift; sourceTree = "<group>"; };
 		AC69391C2604BB050014402B /* FilterCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterCell.swift; sourceTree = "<group>"; };
+		AC6939242604BC420014402B /* LunchesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LunchesViewController.swift; sourceTree = "<group>"; };
 		AC9D2ACC26020E5200C2A50A /* Lunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lunch.swift; sourceTree = "<group>"; };
 		ACC26C0D2601483B009DA011 /* Lunch-Date.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lunch-Date.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACC26C102601483B009DA011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACC26C122601483B009DA011 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		ACC26C142601483B009DA011 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		ACC26C172601483B009DA011 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		ACC26C1A2601483B009DA011 /* Lunch_Date.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Lunch_Date.xcdatamodel; sourceTree = "<group>"; };
 		ACC26C1C2601483E009DA011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		ACC26C1F2601483E009DA011 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -94,6 +94,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AC6939232604BC210014402B /* ViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				AC6939242604BC420014402B /* LunchesViewController.swift */,
+			);
+			path = ViewControllers;
+			sourceTree = "<group>";
+		};
 		AC9D2ACB26020E3A00C2A50A /* Structures */ = {
 			isa = PBXGroup;
 			children = (
@@ -128,10 +136,9 @@
 			children = (
 				ACC26C102601483B009DA011 /* AppDelegate.swift */,
 				ACC26C122601483B009DA011 /* SceneDelegate.swift */,
-				ACC26C142601483B009DA011 /* ViewController.swift */,
+				AC6939232604BC210014402B /* ViewControllers */,
 				AC9D2ACB26020E3A00C2A50A /* Structures */,
 				ACC26C46260148A0009DA011 /* UITableViewCells */,
-				ACC26C162601483B009DA011 /* Main.storyboard */,
 				ACC26C1C2601483E009DA011 /* Assets.xcassets */,
 				ACC26C1E2601483E009DA011 /* LaunchScreen.storyboard */,
 				ACC26C212601483E009DA011 /* Info.plist */,
@@ -272,7 +279,6 @@
 			files = (
 				ACC26C202601483E009DA011 /* LaunchScreen.storyboard in Resources */,
 				ACC26C1D2601483E009DA011 /* Assets.xcassets in Resources */,
-				ACC26C182601483B009DA011 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -297,8 +303,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ACC26C152601483B009DA011 /* ViewController.swift in Sources */,
 				AC69391D2604BB050014402B /* FilterCell.swift in Sources */,
+				AC6939252604BC420014402B /* LunchesViewController.swift in Sources */,
 				ACC26C48260148C0009DA011 /* LunchTeamCell.swift in Sources */,
 				ACC26C112601483B009DA011 /* AppDelegate.swift in Sources */,
 				AC4AD1EC2603482B0092419A /* Employee.swift in Sources */,
@@ -317,6 +323,7 @@
 				AC9D2ACE26020E5200C2A50A /* Lunch.swift in Sources */,
 				ACC26C49260148C0009DA011 /* LunchTeamCell.swift in Sources */,
 				AC69391E2604BB050014402B /* FilterCell.swift in Sources */,
+				AC6939262604BC420014402B /* LunchesViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -329,6 +336,7 @@
 				AC9D2ACF26020E5200C2A50A /* Lunch.swift in Sources */,
 				ACC26C4A260148C0009DA011 /* LunchTeamCell.swift in Sources */,
 				AC69391F2604BB050014402B /* FilterCell.swift in Sources */,
+				AC6939272604BC420014402B /* LunchesViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -348,14 +356,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		ACC26C162601483B009DA011 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				ACC26C172601483B009DA011 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		ACC26C1E2601483E009DA011 /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
