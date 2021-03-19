@@ -60,23 +60,7 @@ class FilterViewController: UIViewController {
         tableView.dataSource = self
         tableView.delegate = self
         
-        view.addSubview(tableView)
-        view.addSubview(closeButton)
-        view.addSubview(fillerView)
-        
-        tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-        tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
-        tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
-        
-        closeButton.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 10.0).isActive = true
-        closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
-        closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
-        closeButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
-        
-        fillerView.topAnchor.constraint(equalTo: closeButton.bottomAnchor).isActive = true
-        fillerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
-        fillerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
-        fillerView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        setupSubviews()
     }
 }
 
@@ -108,6 +92,13 @@ extension FilterViewController: UITableViewDelegate {
         }
         selectedEmployeeName = employeeNames[indexPath.row]
     }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard cell is FilterCell, employeeNames.indices.contains(indexPath.row) else { return }
+        if employeeNames[indexPath.row] == selectedEmployeeName {
+            tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
+        }
+    }
 }
 
 // MARK: - Button actions
@@ -117,5 +108,28 @@ private extension FilterViewController {
         if let safeClosure = dismissClosure {
             safeClosure()
         }
+    }
+}
+
+// MARK: - Helper methods
+private extension FilterViewController {
+    func setupSubviews() {
+        view.addSubview(tableView)
+        view.addSubview(closeButton)
+        view.addSubview(fillerView)
+        
+        tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
+        tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
+        
+        closeButton.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 10.0).isActive = true
+        closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
+        closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
+        closeButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        
+        fillerView.topAnchor.constraint(equalTo: closeButton.bottomAnchor).isActive = true
+        fillerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
+        fillerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
+        fillerView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
     }
 }

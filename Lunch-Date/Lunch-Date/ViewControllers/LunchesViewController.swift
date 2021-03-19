@@ -108,6 +108,7 @@ private extension LunchesViewController {
         }
         
         let filterViewController = FilterViewController()
+        filterViewController.selectedEmployeeName = lunch.filterString
         filterViewController.employeeNames = empoyeeNames
         filterViewController.presentationController?.delegate = self
         filterViewController.dismissClosure = { [weak self] in

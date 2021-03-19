@@ -179,7 +179,6 @@ private extension Lunch {
 }
 
 // MARK: - Helper methods
-
 private extension Lunch {
     func changeDateIfWeekend(date: Date) -> Date {
         var newDate = date
