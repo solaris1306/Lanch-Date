@@ -17,7 +17,8 @@ class Lunch: ObservableObject {
     
     struct LunchDay {
         var lunchTeams: [LunchTeam]
-        var date: String
+        var date: Date
+        var dayName: String
     }
     
     // MARK: - Properties
@@ -30,47 +31,29 @@ class Lunch: ObservableObject {
     
     // MARK: - Private properties
     private var lunchDays: [LunchDay] = []
-    private let dateFormatter: DateFormatter = {
+    private let dayNameDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "dd:MM:YYYY"
+        formatter.dateFormat = "EEEE"
         return formatter
     }()
     private var subscriptions = Set<AnyCancellable>()
     
     // MARK: - Initialization
     required init() {
-        $employeesUrlString
-            .map { (urlString) -> AnyPublisher<[Employee], Never> in
-                let url = URL(string: urlString)
-                let publisher: AnyPublisher<[Employee], Error>
-                if let safeUrl = url {
-                    publisher = URLSession.shared.dataTaskPublisher(for: safeUrl)
-                        .map(\.data)
-                        .decode(type: [Employee].self, decoder: JSONDecoder())
-                        .eraseToAnyPublisher()
-                } else {
-                    publisher = Fail<[Employee], Error>(error: URLError(.badURL))
-                            .eraseToAnyPublisher()
-                }
-                return publisher
-                    .replaceEmpty(with: Employee.placeholderEmployees)
-                    .replaceError(with: Employee.placeholderEmployees)
-                    .eraseToAnyPublisher()
-            }
-            .flatMap({ $0 })
-            .eraseToAnyPublisher()
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.employees, on: self)
-            .store(in: &subscriptions)
-        
-        var lunchesPublisher: AnyPublisher<[LunchDay], Never> {
-            $employees
+        setupSubscribers()
+    }
+}
+
+// MARK: - Subscription methods
+private extension Lunch {
+    func createLunchesPublisher() -> AnyPublisher<[LunchDay], Never> {
+        return $employees
                 .map { [weak self] (employees) -> [LunchDay] in
                     guard let self = self else { return [] }
                     var newLunchTeams: [LunchDay] = []
                     var newEmployees: [Employee] = employees
                     
-                    let currentDate: Date = Date()
+                    var futureDate: Date = Date()
                     var dateComponents = DateComponents()
                     
                     guard newEmployees.count > 2 && newEmployees.count % 2 == 0 else {
@@ -78,7 +61,8 @@ class Lunch: ObservableObject {
                             let oneTeam = LunchTeam(firstEmployee: newEmployees[0].name,
                                                     secondEmployee: newEmployees[1].name)
                             let lunchDay = LunchDay(lunchTeams: [oneTeam],
-                                                    date: self.dateFormatter.string(from: currentDate))
+                                                    date: futureDate,
+                                                    dayName: self.dayNameDateFormatter.string(from: self.changeDateIfWeekend(date: futureDate)))
                             return [lunchDay]
                         }
                         return []
@@ -106,16 +90,55 @@ class Lunch: ObservableObject {
                         }
                         oneLunchDayTeams.shuffle()
                         
-                        dateComponents.day = i
-                        let futureDate = Calendar.current.date(byAdding: dateComponents, to: currentDate) ?? Date()
+                        if i > 0 {
+                            dateComponents.day = 1
+                        }
+                        futureDate = Calendar.current.date(byAdding: dateComponents, to: futureDate) ?? Date()
+                        futureDate = self.changeDateIfWeekend(date: futureDate)
                         let oneLunchDay = LunchDay(lunchTeams: oneLunchDayTeams,
-                                                   date: self.dateFormatter.string(from: futureDate))
+                                                   date: futureDate,
+                                                   dayName: self.dayNameDateFormatter.string(from: futureDate))
                         newLunchTeams.append(oneLunchDay)
                     }
                     return newLunchTeams
                 }
                 .eraseToAnyPublisher()
-        }
+    }
+    
+    func setupSubscribers() {
+        setupEmployeesSubscribers()
+        setupLunchSubscribers()
+        setupAlertIndicatorSubsriber()
+    }
+    
+    func setupEmployeesSubscribers() {
+        $employeesUrlString
+            .map { (urlString) -> AnyPublisher<[Employee], Never> in
+                let url = URL(string: urlString)
+                let publisher: AnyPublisher<[Employee], Error>
+                if let safeUrl = url {
+                    publisher = URLSession.shared.dataTaskPublisher(for: safeUrl)
+                        .map(\.data)
+                        .decode(type: [Employee].self, decoder: JSONDecoder())
+                        .eraseToAnyPublisher()
+                } else {
+                    publisher = Fail<[Employee], Error>(error: URLError(.badURL))
+                            .eraseToAnyPublisher()
+                }
+                return publisher
+                    .replaceEmpty(with: Employee.placeholderEmployees)
+                    .replaceError(with: Employee.placeholderEmployees)
+                    .eraseToAnyPublisher()
+            }
+            .flatMap({ $0 })
+            .eraseToAnyPublisher()
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.employees, on: self)
+            .store(in: &subscriptions)
+    }
+    
+    func setupLunchSubscribers() {
+        let lunchesPublisher = createLunchesPublisher()
         
         lunchesPublisher
             .receive(on: DispatchQueue.main)
@@ -127,7 +150,8 @@ class Lunch: ObservableObject {
             return lunchDays.map { (lunchDay) -> LunchDay in
                 let newTeams: [LunchTeam] = lunchDay.lunchTeams.filter({ $0.firstEmployee == safeFilterString || $0.secondEmployee == safeFilterString })
                 return LunchDay(lunchTeams: newTeams,
-                                date: lunchDay.date)
+                                date: lunchDay.date,
+                                dayName: self.dayNameDateFormatter.string(from: lunchDay.date))
             }
         }
         .receive(on: DispatchQueue.main)
@@ -135,5 +159,35 @@ class Lunch: ObservableObject {
         .store(in: &subscriptions)
     }
     
-    // MARK: - Methods
+    func setupAlertIndicatorSubsriber() {
+        let firstPublisher: AnyPublisher<Bool, Never> = $employeesUrlString.map({ _ in true }).eraseToAnyPublisher()
+        let secondPublisher: AnyPublisher<Bool, Never> = $employees.map({ _ in false }).eraseToAnyPublisher()
+        let thirdPublisher: AnyPublisher<Bool, Never> = $filterString.map({ _ in true }).eraseToAnyPublisher()
+        let fourthPublisher: AnyPublisher<Bool, Never> = $currentlyShownLunchInformations.map({ _ in false }).eraseToAnyPublisher()
+        let mergedPublisher: AnyPublisher<Bool, Never> = firstPublisher.merge(with: secondPublisher, thirdPublisher, fourthPublisher).eraseToAnyPublisher()
+        mergedPublisher
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.showActivityIndicatorView, on: self)
+            .store(in: &subscriptions)
+    }
+}
+
+// MARK: - Helper methods
+
+private extension Lunch {
+    func changeDateIfWeekend(date: Date) -> Date {
+        var newDate = date
+        if Calendar.current.isDateInWeekend(date) {
+            var dateComponents = DateComponents()
+            while Calendar.current.isDateInWeekend(newDate) {
+                dateComponents.day = 1
+                if let safeNewDate = Calendar.current.date(byAdding: dateComponents, to: newDate) {
+                    newDate = safeNewDate
+                } else {
+                    break
+                }
+            }
+        }
+        return newDate
+    }
 }

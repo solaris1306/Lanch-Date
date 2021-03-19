@@ -21,6 +21,12 @@ class ViewController: UIViewController {
         return tableView
     }()
     
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd-MM-YYYY"
+        return formatter
+    }()
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -70,7 +76,8 @@ extension ViewController: UITableViewDataSource {
         return cell
     }
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return "DAY \(section + 1)"
+        let lunchDay: Lunch.LunchDay = lunch.currentlyShownLunchInformations[section]
+        return  lunchDay.dayName + "  " + dateFormatter.string(from: lunchDay.date)
     }
 }
 
