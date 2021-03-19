@@ -26,6 +26,7 @@ class LunchesViewController: UIViewController {
         let tableView = ContentSizedTableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.backgroundColor = .white
+        tableView.tableFooterView = UIView()
         return tableView
     }()
     
@@ -149,9 +150,8 @@ private extension LunchesViewController {
         lunch.$currentlyShownLunchInformations
             .sink(receiveValue: { _ in
                 DispatchQueue.main.async { [weak self] in
-                    if let self = self {
-                        self.tableView.reloadData()
-                    }
+                    guard let self = self else { return }
+                    self.tableView.reloadData()
                 }
             })
             .store(in: &subscriptions)

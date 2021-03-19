@@ -94,10 +94,13 @@ extension FilterViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard cell is FilterCell, employeeNames.indices.contains(indexPath.row) else { return }
-        if employeeNames[indexPath.row] == selectedEmployeeName {
-            tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
+        guard cell is FilterCell,
+              employeeNames.indices.contains(indexPath.row),
+              employeeNames[indexPath.row] == selectedEmployeeName
+        else {
+            return
         }
+        tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
     }
 }
 
@@ -105,9 +108,8 @@ extension FilterViewController: UITableViewDelegate {
 private extension FilterViewController {
     @objc func closeAction() {
         dismiss(animated: true, completion: nil)
-        if let safeClosure = dismissClosure {
-            safeClosure()
-        }
+        guard let safeClosure = dismissClosure else { return }
+        safeClosure()
     }
 }
 
