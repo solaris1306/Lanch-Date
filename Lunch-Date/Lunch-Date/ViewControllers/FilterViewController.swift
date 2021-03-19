@@ -9,30 +9,70 @@ import UIKit
 
 class FilterViewController: UIViewController {
     // MARK: - Properties
-    var employeeNames: [String] = []
+    var employeeNames: [String] = [] {
+        didSet {
+            tableView.reloadData()
+        }
+    }
     var selectedEmployeeName: String? = nil
     
     // MARK: - Private properties
-    private let tableView: UITableView = {
-        let tableView = UITableView()
+    private let tableView: ContentSizedTableView = {
+        let tableView = ContentSizedTableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.backgroundColor = .white
+        tableView.tableFooterView = UIView()
+        tableView.setContentHuggingPriority(.defaultHigh, for: .vertical)
         return tableView
+    }()
+    
+    private let closeButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .white
+        button.layer.borderWidth = 5.0
+        button.layer.borderColor = UIColor.black.cgColor
+        button.setTitle("Close", for: .normal)
+        button.addTarget(self, action: #selector(closeAction), for: .touchUpInside)
+        button.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        return button
+    }()
+    
+    private let fillerView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .white
+        view.setContentHuggingPriority(.defaultLow, for: .vertical)
+        return view
     }()
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        view.backgroundColor = .white
+        
         tableView.register(FilterCell.self, forCellReuseIdentifier: String(describing: FilterCell.self))
         tableView.dataSource = self
         tableView.delegate = self
         
         view.addSubview(tableView)
+        view.addSubview(closeButton)
+        view.addSubview(fillerView)
+        
         tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-        tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
         tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
+        
+        closeButton.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 10.0).isActive = true
+        closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
+        closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
+        closeButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        
+        fillerView.topAnchor.constraint(equalTo: closeButton.bottomAnchor).isActive = true
+        fillerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
+        fillerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
+        fillerView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
     }
 }
 
@@ -63,5 +103,12 @@ extension FilterViewController: UITableViewDelegate {
             return
         }
         selectedEmployeeName = employeeNames[indexPath.row]
+    }
+}
+
+// MARK: - Button actions
+private extension FilterViewController {
+    @objc func closeAction() {
+        dismiss(animated: true, completion: nil)
     }
 }

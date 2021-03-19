@@ -13,12 +13,24 @@ class LunchesViewController: UIViewController {
     private var lunch = Lunch()
     private var subscriptions = Set<AnyCancellable>()
     private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
+    private static let grayColor = UIColor(red: 229.0 / 255.0, green: 229.0 / 255.0, blue: 229.0 / 255.0, alpha: 1.0)
     
-    private let tableView: UITableView = {
-        let tableView = UITableView()
+    private let tableView: ContentSizedTableView = {
+        let tableView = ContentSizedTableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.backgroundColor = .white
         return tableView
+    }()
+    
+    private let filterButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .white
+        button.layer.borderWidth = 5.0
+        button.layer.borderColor = UIColor.black.cgColor
+        button.setTitle("Filter", for: .normal)
+        button.addTarget(self, action: #selector(filterAction), for: .touchUpInside)
+        return button
     }()
     
     private let dateFormatter: DateFormatter = {
@@ -31,12 +43,21 @@ class LunchesViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        view.backgroundColor = .white
+        
         tableView.register(LunchTeamCell.self, forCellReuseIdentifier: String(describing: LunchTeamCell.self))
         tableView.dataSource = self
         tableView.delegate = self
         
+        view.addSubview(filterButton)
         view.addSubview(tableView)
-        tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        
+        filterButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        filterButton.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        filterButton.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        filterButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        
+        tableView.topAnchor.constraint(equalTo: filterButton.bottomAnchor).isActive = true
         tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
         tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
@@ -51,6 +72,12 @@ class LunchesViewController: UIViewController {
                     }
                 }
             })
+            .store(in: &subscriptions)
+        
+        lunch.$employees
+            .map { !$0.isEmpty }
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.filterButton.isEnabled, on: self)
             .store(in: &subscriptions)
     }
     
@@ -83,4 +110,26 @@ extension LunchesViewController: UITableViewDataSource {
 // MARK: - UITableViewDelegate
 extension LunchesViewController: UITableViewDelegate {
     
+}
+
+// MARK: - Presentati
+extension LunchesViewController: UIAdaptivePresentationControllerDelegate {
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        
+    }
+}
+
+// MARK: - Button actions
+private extension LunchesViewController {
+    @objc func filterAction() {
+        guard !lunch.employees.isEmpty else { return }
+        var empoyeeNames: [String] = ["None"]
+        for empoyee in lunch.employees {
+            empoyeeNames.append(empoyee.name)
+        }
+        let filterViewController = FilterViewController()
+        filterViewController.employeeNames = empoyeeNames
+        filterViewController.presentationController?.delegate = self
+        self.present(filterViewController, animated: true, completion: nil)
+    }
 }
