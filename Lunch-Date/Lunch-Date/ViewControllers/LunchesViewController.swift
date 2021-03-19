@@ -32,7 +32,6 @@ class LunchesViewController: UIViewController {
         super.viewDidLoad()
         
         tableView.register(LunchTeamCell.self, forCellReuseIdentifier: String(describing: LunchTeamCell.self))
-        
         tableView.dataSource = self
         tableView.delegate = self
         
