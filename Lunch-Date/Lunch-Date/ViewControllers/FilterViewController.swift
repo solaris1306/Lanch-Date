@@ -15,6 +15,7 @@ class FilterViewController: UIViewController {
         }
     }
     var selectedEmployeeName: String? = nil
+    var dismissClosure: (() -> ())? = nil
     
     // MARK: - Private properties
     private let tableView: ContentSizedTableView = {
@@ -33,6 +34,9 @@ class FilterViewController: UIViewController {
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
         button.setTitle("Close", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.lightGray, for: .disabled)
+        button.titleLabel?.font = .boldSystemFont(ofSize: 20)
         button.addTarget(self, action: #selector(closeAction), for: .touchUpInside)
         button.setContentHuggingPriority(.defaultHigh, for: .vertical)
         return button
@@ -110,5 +114,8 @@ extension FilterViewController: UITableViewDelegate {
 private extension FilterViewController {
     @objc func closeAction() {
         dismiss(animated: true, completion: nil)
+        if let safeClosure = dismissClosure {
+            safeClosure()
+        }
     }
 }

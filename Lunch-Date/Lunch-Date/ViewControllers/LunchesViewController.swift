@@ -14,6 +14,13 @@ class LunchesViewController: UIViewController {
     private var subscriptions = Set<AnyCancellable>()
     private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
     private static let grayColor = UIColor(red: 229.0 / 255.0, green: 229.0 / 255.0, blue: 229.0 / 255.0, alpha: 1.0)
+    private let noneFilter: String = "None"
+    
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd-MM-YYYY"
+        return formatter
+    }()
     
     private let tableView: ContentSizedTableView = {
         let tableView = ContentSizedTableView()
@@ -29,14 +36,11 @@ class LunchesViewController: UIViewController {
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
         button.setTitle("Filter", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.lightGray, for: .disabled)
+        button.titleLabel?.font = .boldSystemFont(ofSize: 20)
         button.addTarget(self, action: #selector(filterAction), for: .touchUpInside)
         return button
-    }()
-    
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd-MM-YYYY"
-        return formatter
     }()
     
     // MARK: - Lifecycle
@@ -49,36 +53,9 @@ class LunchesViewController: UIViewController {
         tableView.dataSource = self
         tableView.delegate = self
         
-        view.addSubview(filterButton)
-        view.addSubview(tableView)
-        
-        filterButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-        filterButton.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        filterButton.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        filterButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
-        
-        tableView.topAnchor.constraint(equalTo: filterButton.bottomAnchor).isActive = true
-        tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
-        tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        
+        setupSubviews()
         lunch.employeesUrlString = employeesUrlString
-        
-        lunch.$currentlyShownLunchInformations
-            .sink(receiveValue: { _ in
-                DispatchQueue.main.async { [weak self] in
-                    if let self = self {
-                        self.tableView.reloadData()
-                    }
-                }
-            })
-            .store(in: &subscriptions)
-        
-        lunch.$employees
-            .map { !$0.isEmpty }
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.filterButton.isEnabled, on: self)
-            .store(in: &subscriptions)
+        setupSubscribers()
     }
     
 }
@@ -115,7 +92,8 @@ extension LunchesViewController: UITableViewDelegate {
 // MARK: - Presentati
 extension LunchesViewController: UIAdaptivePresentationControllerDelegate {
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        
+        guard let filterViewController = presentationController.presentedViewController as? FilterViewController else { return }
+        setLunchFilterString(from: filterViewController)
     }
 }
 
@@ -123,13 +101,64 @@ extension LunchesViewController: UIAdaptivePresentationControllerDelegate {
 private extension LunchesViewController {
     @objc func filterAction() {
         guard !lunch.employees.isEmpty else { return }
-        var empoyeeNames: [String] = ["None"]
+        
+        var empoyeeNames: [String] = [noneFilter]
         for empoyee in lunch.employees {
             empoyeeNames.append(empoyee.name)
         }
+        
         let filterViewController = FilterViewController()
         filterViewController.employeeNames = empoyeeNames
         filterViewController.presentationController?.delegate = self
+        filterViewController.dismissClosure = { [weak self] in
+            guard let self = self else { return }
+            self.setLunchFilterString(from: filterViewController)
+        }
         self.present(filterViewController, animated: true, completion: nil)
+    }
+}
+
+// MARK: - Helper methods
+private extension LunchesViewController {
+    func setupSubviews() {
+        view.addSubview(filterButton)
+        view.addSubview(tableView)
+        
+        filterButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        filterButton.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        filterButton.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        filterButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        
+        tableView.topAnchor.constraint(equalTo: filterButton.bottomAnchor).isActive = true
+        tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
+        tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+    }
+    
+    func setLunchFilterString(from filterViewController: FilterViewController) {
+        guard filterViewController.selectedEmployeeName != self.noneFilter,
+              let filterString = filterViewController.selectedEmployeeName else {
+            self.lunch.filterString = nil
+            return
+        }
+        self.lunch.filterString = filterString
+    }
+    
+    func setupSubscribers() {
+        lunch.$currentlyShownLunchInformations
+            .sink(receiveValue: { _ in
+                DispatchQueue.main.async { [weak self] in
+                    if let self = self {
+                        self.tableView.reloadData()
+                    }
+                }
+            })
+            .store(in: &subscriptions)
+        
+        lunch.$employees
+            .map { !$0.isEmpty }
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.filterButton.isEnabled, on: self)
+            .store(in: &subscriptions)
     }
 }

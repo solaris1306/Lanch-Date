@@ -135,6 +135,12 @@ private extension Lunch {
             .receive(on: DispatchQueue.main)
             .assign(to: \.employees, on: self)
             .store(in: &subscriptions)
+        
+        $employees
+            .map({ _ in nil })
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.filterString, on: self)
+            .store(in: &subscriptions)
     }
     
     func setupLunchSubscribers() {
