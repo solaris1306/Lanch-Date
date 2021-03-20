@@ -23,21 +23,14 @@ class LunchesViewController: UIViewController {
         return formatter
     }()
     
-    private let tableView: ContentSizedTableView = {
-        let tableView = ContentSizedTableView()
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.backgroundColor = .white
-        tableView.tableFooterView = UIView()
-        return tableView
-    }()
-    
     private let filterButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.backgroundColor = .white
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
-        button.setTitle("Filter", for: .normal)
+        button.layer.cornerRadius = 25.0
+        button.setTitle("FILTER", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
         button.titleLabel?.font = .boldSystemFont(ofSize: 20)
@@ -51,7 +44,8 @@ class LunchesViewController: UIViewController {
         button.backgroundColor = .white
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
-        button.setTitle("Load", for: .normal)
+        button.layer.cornerRadius = 25.0
+        button.setTitle("LOAD", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
         button.titleLabel?.font = .boldSystemFont(ofSize: 20)
@@ -79,7 +73,7 @@ class LunchesViewController: UIViewController {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.backgroundColor = .white
-        button.setTitle("   RESET   ", for: .normal)
+        button.setTitle("RESET", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
         button.titleLabel?.font = .boldSystemFont(ofSize: 20)
@@ -97,8 +91,55 @@ class LunchesViewController: UIViewController {
         stackView.alignment = .center
         stackView.distribution = .fill
         stackView.spacing = 10.0
-        stackView.layoutMargins = UIEdgeInsets(top: 10.0, left: 10.0, bottom: 10.0, right: 10.0)
+        stackView.layoutMargins = UIEdgeInsets(top: 10.0, left: 10.0, bottom: 10.0, right: 30.0)
         stackView.isLayoutMarginsRelativeArrangement = true
+        return stackView
+    }()
+    
+    private let tableView: ContentSizedTableView = {
+        let tableView = ContentSizedTableView()
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.backgroundColor = .white
+        tableView.tableFooterView = UIView()
+        return tableView
+    }()
+    
+    private let saveButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .white
+        button.layer.borderWidth = 5.0
+        button.layer.borderColor = UIColor.black.cgColor
+        button.layer.cornerRadius = 25.0
+        button.setTitle("SAVE", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.lightGray, for: .disabled)
+        button.titleLabel?.font = .boldSystemFont(ofSize: 20)
+        button.addTarget(self, action: #selector(saveLunchAction), for: .touchUpInside)
+        return button
+    }()
+    
+    private let newScheduleButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .white
+        button.layer.borderWidth = 5.0
+        button.layer.borderColor = UIColor.black.cgColor
+        button.layer.cornerRadius = 25.0
+        button.setTitle("NEW SCHEDULE", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.lightGray, for: .disabled)
+        button.titleLabel?.font = .boldSystemFont(ofSize: 20)
+        button.addTarget(self, action: #selector(getNewLunchSchedule), for: .touchUpInside)
+        return button
+    }()
+    
+    private let scheduleStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .horizontal
+        stackView.backgroundColor = .white
+        stackView.distribution = .fillEqually
         return stackView
     }()
     
@@ -184,6 +225,14 @@ private extension LunchesViewController {
     @objc func loadOldLunchesAction() {
         print("Load old lunches")
     }
+    
+    @objc func saveLunchAction() {
+        
+    }
+    
+    @objc func getNewLunchSchedule() {
+        
+    }
 }
 
 // MARK: - Helper methods
@@ -191,10 +240,12 @@ private extension LunchesViewController {
     func setupSubviews() {
         setupFilterStackView()
         setupButtonStackView()
+        setupScheduleStackView()
         
         view.addSubview(buttonStackView)
         view.addSubview(tableView)
         view.addSubview(filterStackView)
+        view.addSubview(scheduleStackView)
         
         buttonStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
         buttonStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
@@ -205,9 +256,13 @@ private extension LunchesViewController {
         filterStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
         tableView.topAnchor.constraint(equalTo: filterStackView.bottomAnchor).isActive = true
-        tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
         tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        
+        scheduleStackView.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 20.0).isActive = true
+        scheduleStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        scheduleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        scheduleStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
     }
     
     func setupFilterStackView() {
@@ -223,6 +278,14 @@ private extension LunchesViewController {
         loadButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
         buttonStackView.addArrangedSubview(filterButton)
         buttonStackView.addArrangedSubview(loadButton)
+    }
+    
+    func setupScheduleStackView() {
+        newScheduleButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        saveButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        
+        scheduleStackView.addArrangedSubview(newScheduleButton)
+        scheduleStackView.addArrangedSubview(saveButton)
     }
     
     func setLunchFilterString(from filterViewController: FilterViewController) {

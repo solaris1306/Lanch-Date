@@ -33,6 +33,7 @@ class FilterViewController: UIViewController {
         button.backgroundColor = .white
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
+        button.layer.cornerRadius = 25.0
         button.setTitle("Close", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
