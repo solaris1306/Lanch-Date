@@ -72,9 +72,6 @@ class LunchesViewController: UIViewController {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.numberOfLines = 0
-        label.setContentHuggingPriority(UILayoutPriority(1000), for: .horizontal)
-        label.setContentHuggingPriority(UILayoutPriority(1000), for: .vertical)
-        label.setContentCompressionResistancePriority(UILayoutPriority(1000), for: .vertical)
         return label
     }()
     
@@ -89,8 +86,6 @@ class LunchesViewController: UIViewController {
         button.addTarget(self, action: #selector(filterResetAction), for: .touchUpInside)
         button.clipsToBounds = true
         button.setContentHuggingPriority(UILayoutPriority(1000), for: .horizontal)
-        button.setContentHuggingPriority(UILayoutPriority(1000), for: .vertical)
-        button.setContentCompressionResistancePriority(UILayoutPriority(1000), for: .horizontal)
         return button
     }()
     
@@ -101,6 +96,9 @@ class LunchesViewController: UIViewController {
         stackView.backgroundColor = .white
         stackView.alignment = .center
         stackView.distribution = .fill
+        stackView.spacing = 10.0
+        stackView.layoutMargins = UIEdgeInsets(top: 10.0, left: 10.0, bottom: 10.0, right: 10.0)
+        stackView.isLayoutMarginsRelativeArrangement = true
         return stackView
     }()
     
@@ -203,7 +201,7 @@ private extension LunchesViewController {
         buttonStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
         filterStackView.topAnchor.constraint(equalTo: buttonStackView.bottomAnchor).isActive = true
-        filterStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10.0).isActive = true
+        filterStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         filterStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
         tableView.topAnchor.constraint(equalTo: filterStackView.bottomAnchor).isActive = true
@@ -255,7 +253,7 @@ private extension LunchesViewController {
         lunch.$filterString
             .map { (filterString) -> String? in
                 guard let safeString = filterString else { return nil }
-                return "List if filtered for employee: \(safeString)"
+                return "Filtered employee: \(safeString)"
             }
             .receive(on: DispatchQueue.main)
             .assign(to: \.filterLabel.text, on: self)
