@@ -15,6 +15,7 @@ class LunchesViewController: UIViewController {
     private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
     private static let grayColor = UIColor(red: 229.0 / 255.0, green: 229.0 / 255.0, blue: 229.0 / 255.0, alpha: 1.0)
     private let noneFilter: String = "None"
+    private var resetButtonHeightConstraint = NSLayoutConstraint()
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -41,6 +42,33 @@ class LunchesViewController: UIViewController {
         button.setTitleColor(.lightGray, for: .disabled)
         button.titleLabel?.font = .boldSystemFont(ofSize: 20)
         button.addTarget(self, action: #selector(filterAction), for: .touchUpInside)
+        return button
+    }()
+    
+    private let filterStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .horizontal
+        stackView.backgroundColor = .white
+        return stackView
+    }()
+    
+    private let filterLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let resetButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .white
+        button.setTitle("   RESET   ", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.lightGray, for: .disabled)
+        button.titleLabel?.font = .boldSystemFont(ofSize: 20)
+        button.addTarget(self, action: #selector(filterResetAction), for: .touchUpInside)
+        button.clipsToBounds = true
         return button
     }()
     
@@ -118,23 +146,44 @@ private extension LunchesViewController {
         }
         self.present(filterViewController, animated: true, completion: nil)
     }
+    
+    @objc func filterResetAction() {
+        lunch.filterString = nil
+    }
 }
 
 // MARK: - Helper methods
 private extension LunchesViewController {
     func setupSubviews() {
+        setupFilterStackView()
+        
         view.addSubview(filterButton)
         view.addSubview(tableView)
+        view.addSubview(filterStackView)
         
         filterButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
         filterButton.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         filterButton.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         filterButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
         
-        tableView.topAnchor.constraint(equalTo: filterButton.bottomAnchor).isActive = true
+        filterStackView.topAnchor.constraint(equalTo: filterButton.bottomAnchor).isActive = true
+        filterStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10.0).isActive = true
+        filterStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        
+        tableView.topAnchor.constraint(equalTo: filterStackView.bottomAnchor).isActive = true
         tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
         tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+    }
+    
+    func setupFilterStackView() {
+        resetButtonHeightConstraint = resetButton.heightAnchor.constraint(equalToConstant: 0.0)
+        resetButtonHeightConstraint.isActive = true
+        
+        filterLabel.text = "Simple Text"
+        
+        filterStackView.addArrangedSubview(filterLabel)
+        filterStackView.addArrangedSubview(resetButton)
     }
     
     func setLunchFilterString(from filterViewController: FilterViewController) {
@@ -160,6 +209,24 @@ private extension LunchesViewController {
             .map { !$0.isEmpty }
             .receive(on: DispatchQueue.main)
             .assign(to: \.filterButton.isEnabled, on: self)
+            .store(in: &subscriptions)
+        
+        lunch.$filterString
+            .map { (filterString) -> String? in
+                guard let safeString = filterString else { return nil }
+                return "List if filtered for employee: \(safeString)"
+            }
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.filterLabel.text, on: self)
+            .store(in: &subscriptions)
+        
+        lunch.$filterString
+            .map { (filterString) -> CGFloat in
+                guard filterString != nil else { return 0.0 }
+                return 40.0
+            }
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.resetButtonHeightConstraint.constant, on: self)
             .store(in: &subscriptions)
     }
 }
