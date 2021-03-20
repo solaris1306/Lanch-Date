@@ -45,17 +45,36 @@ class LunchesViewController: UIViewController {
         return button
     }()
     
-    private let filterStackView: UIStackView = {
+    private let loadButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .white
+        button.layer.borderWidth = 5.0
+        button.layer.borderColor = UIColor.black.cgColor
+        button.setTitle("Load", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.lightGray, for: .disabled)
+        button.titleLabel?.font = .boldSystemFont(ofSize: 20)
+        button.addTarget(self, action: #selector(loadOldLunchesAction), for: .touchUpInside)
+        return button
+    }()
+    
+    private let buttonStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.axis = .horizontal
         stackView.backgroundColor = .white
+        stackView.distribution = .fillEqually
         return stackView
     }()
     
     private let filterLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.numberOfLines = 0
+        label.setContentHuggingPriority(UILayoutPriority(1000), for: .horizontal)
+        label.setContentHuggingPriority(UILayoutPriority(1000), for: .vertical)
+        label.setContentCompressionResistancePriority(UILayoutPriority(1000), for: .vertical)
         return label
     }()
     
@@ -69,7 +88,20 @@ class LunchesViewController: UIViewController {
         button.titleLabel?.font = .boldSystemFont(ofSize: 20)
         button.addTarget(self, action: #selector(filterResetAction), for: .touchUpInside)
         button.clipsToBounds = true
+        button.setContentHuggingPriority(UILayoutPriority(1000), for: .horizontal)
+        button.setContentHuggingPriority(UILayoutPriority(1000), for: .vertical)
+        button.setContentCompressionResistancePriority(UILayoutPriority(1000), for: .horizontal)
         return button
+    }()
+    
+    private let filterStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .horizontal
+        stackView.backgroundColor = .white
+        stackView.alignment = .center
+        stackView.distribution = .fill
+        return stackView
     }()
     
     // MARK: - Lifecycle
@@ -150,23 +182,27 @@ private extension LunchesViewController {
     @objc func filterResetAction() {
         lunch.filterString = nil
     }
+    
+    @objc func loadOldLunchesAction() {
+        print("Load old lunches")
+    }
 }
 
 // MARK: - Helper methods
 private extension LunchesViewController {
     func setupSubviews() {
         setupFilterStackView()
+        setupButtonStackView()
         
-        view.addSubview(filterButton)
+        view.addSubview(buttonStackView)
         view.addSubview(tableView)
         view.addSubview(filterStackView)
         
-        filterButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-        filterButton.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        filterButton.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        filterButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        buttonStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        buttonStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        buttonStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
-        filterStackView.topAnchor.constraint(equalTo: filterButton.bottomAnchor).isActive = true
+        filterStackView.topAnchor.constraint(equalTo: buttonStackView.bottomAnchor).isActive = true
         filterStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10.0).isActive = true
         filterStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
@@ -180,10 +216,15 @@ private extension LunchesViewController {
         resetButtonHeightConstraint = resetButton.heightAnchor.constraint(equalToConstant: 0.0)
         resetButtonHeightConstraint.isActive = true
         
-        filterLabel.text = "Simple Text"
-        
         filterStackView.addArrangedSubview(filterLabel)
         filterStackView.addArrangedSubview(resetButton)
+    }
+    
+    func setupButtonStackView() {
+        filterButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        loadButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        buttonStackView.addArrangedSubview(filterButton)
+        buttonStackView.addArrangedSubview(loadButton)
     }
     
     func setLunchFilterString(from filterViewController: FilterViewController) {
