@@ -33,8 +33,8 @@ class FilterViewController: UIViewController {
         button.backgroundColor = .white
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
-        button.layer.cornerRadius = 25.0
-        button.setTitle("Close", for: .normal)
+        button.layer.cornerRadius = LunchesViewController.buttonHeight / 2
+        button.setTitle("CLOSE", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
         button.titleLabel?.font = .boldSystemFont(ofSize: 20)
@@ -128,7 +128,7 @@ private extension FilterViewController {
         closeButton.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 10.0).isActive = true
         closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
         closeButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
-        closeButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        closeButton.heightAnchor.constraint(equalToConstant: LunchesViewController.buttonHeight).isActive = true
         
         fillerView.topAnchor.constraint(equalTo: closeButton.bottomAnchor).isActive = true
         fillerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true

@@ -13,9 +13,11 @@ class LunchesViewController: UIViewController {
     private var lunch = Lunch()
     private var subscriptions = Set<AnyCancellable>()
     private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
-    private static let grayColor = UIColor(red: 229.0 / 255.0, green: 229.0 / 255.0, blue: 229.0 / 255.0, alpha: 1.0)
     private let noneFilter: String = "None"
     private var resetButtonHeightConstraint = NSLayoutConstraint()
+    
+    private static let grayColor = UIColor(red: 229.0 / 255.0, green: 229.0 / 255.0, blue: 229.0 / 255.0, alpha: 1.0)
+    static let buttonHeight: CGFloat = 40.0
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -29,7 +31,7 @@ class LunchesViewController: UIViewController {
         button.backgroundColor = .white
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
-        button.layer.cornerRadius = 25.0
+        button.layer.cornerRadius = LunchesViewController.buttonHeight / 2
         button.setTitle("FILTER", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
@@ -44,7 +46,7 @@ class LunchesViewController: UIViewController {
         button.backgroundColor = .white
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
-        button.layer.cornerRadius = 25.0
+        button.layer.cornerRadius = LunchesViewController.buttonHeight / 2
         button.setTitle("LOAD", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
@@ -110,7 +112,7 @@ class LunchesViewController: UIViewController {
         button.backgroundColor = .white
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
-        button.layer.cornerRadius = 25.0
+        button.layer.cornerRadius = LunchesViewController.buttonHeight / 2
         button.setTitle("SAVE", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
@@ -125,13 +127,20 @@ class LunchesViewController: UIViewController {
         button.backgroundColor = .white
         button.layer.borderWidth = 5.0
         button.layer.borderColor = UIColor.black.cgColor
-        button.layer.cornerRadius = 25.0
+        button.layer.cornerRadius = LunchesViewController.buttonHeight / 2
         button.setTitle("NEW SCHEDULE", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
         button.titleLabel?.font = .boldSystemFont(ofSize: 20)
         button.addTarget(self, action: #selector(getNewLunchSchedule), for: .touchUpInside)
         return button
+    }()
+    
+    private let fillerView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .white
+        return view
     }()
     
     private let scheduleStackView: UIStackView = {
@@ -245,6 +254,7 @@ private extension LunchesViewController {
         view.addSubview(buttonStackView)
         view.addSubview(tableView)
         view.addSubview(filterStackView)
+        view.addSubview(fillerView)
         view.addSubview(scheduleStackView)
         
         buttonStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
@@ -259,7 +269,12 @@ private extension LunchesViewController {
         tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         
-        scheduleStackView.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 20.0).isActive = true
+        fillerView.topAnchor.constraint(equalTo: tableView.bottomAnchor).isActive = true
+        fillerView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        fillerView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        fillerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 1.0).isActive = true
+        
+        scheduleStackView.topAnchor.constraint(equalTo: fillerView.bottomAnchor, constant: 20.0).isActive = true
         scheduleStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         scheduleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         scheduleStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
@@ -274,15 +289,15 @@ private extension LunchesViewController {
     }
     
     func setupButtonStackView() {
-        filterButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
-        loadButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        filterButton.heightAnchor.constraint(equalToConstant: LunchesViewController.buttonHeight).isActive = true
+        loadButton.heightAnchor.constraint(equalToConstant: LunchesViewController.buttonHeight).isActive = true
         buttonStackView.addArrangedSubview(filterButton)
         buttonStackView.addArrangedSubview(loadButton)
     }
     
     func setupScheduleStackView() {
-        newScheduleButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
-        saveButton.heightAnchor.constraint(equalToConstant: 50.0).isActive = true
+        newScheduleButton.heightAnchor.constraint(equalToConstant: LunchesViewController.buttonHeight).isActive = true
+        saveButton.heightAnchor.constraint(equalToConstant: LunchesViewController.buttonHeight).isActive = true
         
         scheduleStackView.addArrangedSubview(newScheduleButton)
         scheduleStackView.addArrangedSubview(saveButton)
