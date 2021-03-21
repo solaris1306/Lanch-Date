@@ -106,6 +106,13 @@ class LunchesViewController: UIViewController {
         return tableView
     }()
     
+    private let fillerView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .white
+        return view
+    }()
+    
     private let saveButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -134,13 +141,6 @@ class LunchesViewController: UIViewController {
         button.titleLabel?.font = .boldSystemFont(ofSize: 20)
         button.addTarget(self, action: #selector(getNewLunchSchedule), for: .touchUpInside)
         return button
-    }()
-    
-    private let fillerView: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .white
-        return view
     }()
     
     private let scheduleStackView: UIStackView = {
@@ -198,11 +198,15 @@ extension LunchesViewController: UITableViewDelegate {
     
 }
 
-// MARK: - Presentati
+// MARK: - UIAdaptivePresentationControllerDelegate
 extension LunchesViewController: UIAdaptivePresentationControllerDelegate {
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        guard let filterViewController = presentationController.presentedViewController as? FilterViewController else { return }
-        setLunchFilterString(from: filterViewController)
+        if let filterViewController = presentationController.presentedViewController as? FilterViewController {
+            setLunchFilterString(from: filterViewController)
+        }
+        if let loadViewControler = presentationController.presentedViewController as? LoadViewController {
+            setOldLunchURL(from: loadViewControler)
+        }
     }
 }
 
@@ -232,19 +236,42 @@ private extension LunchesViewController {
     }
     
     @objc func loadOldLunchesAction() {
-        print("Load old lunches")
+        guard !lunch.oldLunches.isEmpty else { return }
+        
+        let loadViewController = LoadViewController()
+        loadViewController.selectedOldLunch = lunch.selectedOldLunch
+        loadViewController.oldLunches = lunch.oldLunches
+        loadViewController.presentationController?.delegate = self
+        loadViewController.dismissClosure = { [weak self] in
+            guard let self = self else { return }
+            self.setOldLunchURL(from: loadViewController)
+        }
+        self.present(loadViewController, animated: true, completion: nil)
     }
     
     @objc func saveLunchAction() {
-        
+        let fileName: String = "OldLunch_" + self.dateFormatter.string(from: self.lunch.startDate) + "-" + self.dateFormatter.string(from: self.lunch.endDate) + ".json"
+        do {
+            let jsonData = try JSONEncoder().encode(lunch)
+            guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+            let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
+            do {
+                try jsonData.write(to: pathWithFileName)
+                print("File name: \(pathWithFileName)")
+            } catch {
+                print("JSON data couldn't be written to file.")
+            }
+        } catch {
+            print("Data couldn't be encoded.")
+        }
     }
     
     @objc func getNewLunchSchedule() {
-        
+        lunch.employeesUrlString = employeesUrlString
     }
 }
 
-// MARK: - Helper methods
+// MARK: - Setup subviews
 private extension LunchesViewController {
     func setupSubviews() {
         setupFilterStackView()
@@ -302,7 +329,10 @@ private extension LunchesViewController {
         scheduleStackView.addArrangedSubview(newScheduleButton)
         scheduleStackView.addArrangedSubview(saveButton)
     }
-    
+}
+
+// MARK: - Helper methods
+private extension LunchesViewController {
     func setLunchFilterString(from filterViewController: FilterViewController) {
         guard filterViewController.selectedEmployeeName != self.noneFilter,
               let filterString = filterViewController.selectedEmployeeName else {
@@ -310,6 +340,14 @@ private extension LunchesViewController {
             return
         }
         self.lunch.filterString = filterString
+    }
+    
+    func setOldLunchURL(from loadViewController: LoadViewController) {
+        guard let safeOldFilterString = loadViewController.selectedOldLunch else {
+            self.lunch.selectedOldLunch = nil
+            return
+        }
+        self.lunch.selectedOldLunch = safeOldFilterString
     }
     
     func setupSubscribers() {
@@ -340,10 +378,51 @@ private extension LunchesViewController {
         lunch.$filterString
             .map { (filterString) -> CGFloat in
                 guard filterString != nil else { return 0.0 }
-                return 40.0
+                return 30.0
             }
             .receive(on: DispatchQueue.main)
             .assign(to: \.resetButtonHeightConstraint.constant, on: self)
             .store(in: &subscriptions)
+        
+        lunch.$oldLunches
+            .map({ !$0.isEmpty })
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.loadButton.isEnabled, on: self)
+            .store(in: &subscriptions)
+    }
+    
+    func generateOldLunches() {
+        for i in 1...12 {
+            var monthString = ""
+            if i < 10 {
+                monthString = "0" + "\(i)-"
+            } else {
+                monthString = "\(i)-"
+            }
+            let startDateString = "2020-" + monthString + "01"
+            
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            let date = dateFormatter.date(from: startDateString) ?? Date()
+            lunch.setStartDate(date: date)
+            dateFormatter.dateFormat = "dd-MM-yyyy"
+            
+            let newLunch: [Lunch.LunchDay] = lunch.generateLunchTeams(for: lunch.employees)
+            lunch.changeLunches(with: newLunch)
+            
+            let fileName: String = "OldLunch_" + self.dateFormatter.string(from: self.lunch.startDate) + "-" + self.dateFormatter.string(from: self.lunch.endDate) + ".json"
+            do {
+                let jsonData = try JSONEncoder().encode(lunch)
+                guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+                let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
+                do {
+                    try jsonData.write(to: pathWithFileName)
+                    print("File name: \(pathWithFileName)")
+                } catch {
+                    print("JSON data couldn't be written to file.")
+                }
+            } catch {
+                print("Data couldn't be encoded.")
+            }
+        }
     }
 }
