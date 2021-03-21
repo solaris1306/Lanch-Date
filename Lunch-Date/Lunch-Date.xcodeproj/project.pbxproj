@@ -50,6 +50,9 @@
 		ACC8B05B2607663E00F62B9D /* OldLunch_01-07-2020-13-07-2020.json in Resources */ = {isa = PBXBuildFile; fileRef = ACC8B04F2607663E00F62B9D /* OldLunch_01-07-2020-13-07-2020.json */; };
 		ACC8B05C2607663E00F62B9D /* OldLunch_03-02-2020-13-02-2020.json in Resources */ = {isa = PBXBuildFile; fileRef = ACC8B0502607663E00F62B9D /* OldLunch_03-02-2020-13-02-2020.json */; };
 		ACC8B05D2607663E00F62B9D /* OldLunch_01-06-2020-11-06-2020.json in Resources */ = {isa = PBXBuildFile; fileRef = ACC8B0512607663E00F62B9D /* OldLunch_01-06-2020-11-06-2020.json */; };
+		ACC8B0672607CD2900F62B9D /* LunchesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC8B0662607CD2900F62B9D /* LunchesView.swift */; };
+		ACC8B0682607CD2900F62B9D /* LunchesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC8B0662607CD2900F62B9D /* LunchesView.swift */; };
+		ACC8B0692607CD2900F62B9D /* LunchesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC8B0662607CD2900F62B9D /* LunchesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -103,6 +106,7 @@
 		ACC8B04F2607663E00F62B9D /* OldLunch_01-07-2020-13-07-2020.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "OldLunch_01-07-2020-13-07-2020.json"; sourceTree = "<group>"; };
 		ACC8B0502607663E00F62B9D /* OldLunch_03-02-2020-13-02-2020.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "OldLunch_03-02-2020-13-02-2020.json"; sourceTree = "<group>"; };
 		ACC8B0512607663E00F62B9D /* OldLunch_01-06-2020-11-06-2020.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "OldLunch_01-06-2020-11-06-2020.json"; sourceTree = "<group>"; };
+		ACC8B0662607CD2900F62B9D /* LunchesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LunchesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,7 +137,7 @@
 		AC6939232604BC210014402B /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
-				AC6939242604BC420014402B /* LunchesViewController.swift */,
+				ACC8B0642607CD0A00F62B9D /* LunchesViewController */,
 				AC6939312604BD8D0014402B /* FilterViewController.swift */,
 				ACBA0FD22606647700CD13CA /* LoadViewController.swift */,
 			);
@@ -247,6 +251,23 @@
 				AC69391C2604BB050014402B /* FilterCell.swift */,
 			);
 			path = UITableViewCells;
+			sourceTree = "<group>";
+		};
+		ACC8B0642607CD0A00F62B9D /* LunchesViewController */ = {
+			isa = PBXGroup;
+			children = (
+				AC6939242604BC420014402B /* LunchesViewController.swift */,
+				ACC8B0652607CD1500F62B9D /* Views */,
+			);
+			path = LunchesViewController;
+			sourceTree = "<group>";
+		};
+		ACC8B0652607CD1500F62B9D /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				ACC8B0662607CD2900F62B9D /* LunchesView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -391,6 +412,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC69391D2604BB050014402B /* FilterCell.swift in Sources */,
+				ACC8B0672607CD2900F62B9D /* LunchesView.swift in Sources */,
 				AC6939252604BC420014402B /* LunchesViewController.swift in Sources */,
 				ACC26C48260148C0009DA011 /* LunchTeamCell.swift in Sources */,
 				AC6939392604E0B30014402B /* ContentSizedTableView.swift in Sources */,
@@ -411,6 +433,7 @@
 				ACBA0FD42606647700CD13CA /* LoadViewController.swift in Sources */,
 				AC6939332604BD8D0014402B /* FilterViewController.swift in Sources */,
 				ACC26C2B2601483E009DA011 /* Lunch_DateTests.swift in Sources */,
+				ACC8B0682607CD2900F62B9D /* LunchesView.swift in Sources */,
 				AC4AD1ED2603482B0092419A /* Employee.swift in Sources */,
 				AC69393A2604E0B30014402B /* ContentSizedTableView.swift in Sources */,
 				AC9D2ACE26020E5200C2A50A /* Lunch.swift in Sources */,
@@ -427,6 +450,7 @@
 				ACBA0FD52606647700CD13CA /* LoadViewController.swift in Sources */,
 				AC6939342604BD8D0014402B /* FilterViewController.swift in Sources */,
 				ACC26C362601483E009DA011 /* Lunch_DateUITests.swift in Sources */,
+				ACC8B0692607CD2900F62B9D /* LunchesView.swift in Sources */,
 				AC4AD1EE2603482B0092419A /* Employee.swift in Sources */,
 				AC69393B2604E0B30014402B /* ContentSizedTableView.swift in Sources */,
 				AC9D2ACF26020E5200C2A50A /* Lunch.swift in Sources */,
