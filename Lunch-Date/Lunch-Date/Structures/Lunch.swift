@@ -8,36 +8,12 @@
 import Foundation
 import Combine
 
-class Lunch: ObservableObject, Codable {
-    // MARK: - Coding keys
-    enum CodingKeys: String, CodingKey {
-        case lunchDays
-        case startDate
-        case endDate
-        case employees
-    }
-    
-    // MARK: - Helper structures
-    struct LunchTeam: Codable {
-        var firstEmployee: String
-        var secondEmployee: String
-    }
-    
-    struct LunchDay: Codable {
-        var lunchTeams: [LunchTeam]
-        var date: Date
-        var dayName: String
-    }
-    
+class Lunch: ObservableObject {
     // MARK: - Properties
     // MARK: - Published properties
-    @Published var employeesUrlString: String = ""
-    @Published var employees: [Employee] = []
     @Published var currentlyShownLunchInformations: [LunchDay] = []
-    @Published var filterString: String? = nil
     @Published var showActivityIndicatorView = false
     @Published var oldLunches: [URL] = []
-    @Published var selectedOldLunch: URL? = nil
     
     // MARK: - Private properties
     private let dayNameDateFormatter: DateFormatter = {
@@ -45,34 +21,15 @@ class Lunch: ObservableObject, Codable {
         formatter.dateFormat = "EEEE"
         return formatter
     }()
-    private var subscriptions = Set<AnyCancellable>()
+    
     
     private (set) var startDate: Date = Lunch.changeDateIfWeekend(date: Date())
     private (set) var endDate: Date = Date()
     @Published private (set) var lunchDays: [LunchDay] = []
     
-    @Published private var oldLunchesURLs: [URL]? = nil
-    
     // MARK: - Initialization
     required init() {
         setupSubscribers()
-    }
-    
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.lunchDays = try container.decode([LunchDay].self, forKey: .lunchDays)
-        self.startDate = try container.decode(Date.self, forKey: .startDate)
-        self.endDate = try container.decode(Date.self, forKey: .endDate)
-        self.employees = try container.decode([Employee].self, forKey: .employees)
-        setupSubscribers()
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(lunchDays, forKey: .lunchDays)
-        try container.encode(startDate, forKey: .startDate)
-        try container.encode(endDate, forKey: .endDate)
-        try container.encode(employees, forKey: .employees)
     }
 }
 

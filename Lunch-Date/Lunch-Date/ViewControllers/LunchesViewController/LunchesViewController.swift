@@ -8,22 +8,49 @@
 import UIKit
 import Combine
 
+enum LunchViewControllerErrors: Error {
+    case numberOfRowsInSectionError(description: String)
+    case lunchTeamCellDequeuError(description: String)
+    case cellForRowAtError(description: String)
+}
+
 class LunchesViewController: UIViewController {
     // MARK: - Private properties
-    private var lunch = Lunch()
+    private let lunchViewModel: LunchViewModel
+    private let lunchModel: LunchModel
     let lunchView = LunchesView()
     private var subscriptions = Set<AnyCancellable>()
     private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
     private let noneFilter: String = "None"
+    private var lunchDays: LunchDays = LunchDays.emptyDays {
+        didSet {
+            self.lunchView.tableView.reloadData()
+        }
+    }
     
     private static let grayColor = UIColor(red: 229.0 / 255.0, green: 229.0 / 255.0, blue: 229.0 / 255.0, alpha: 1.0)
     static let buttonHeight: CGFloat = 40.0
     
-    private let dateFormatter: DateFormatter = {
+    public static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd-MM-YYYY"
         return formatter
     }()
+    
+    // MARK: - Initialization
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        self.lunchModel = LunchModel(employeesUrlString: self.employeesUrlString,
+                                     filterString: nil,
+                                     selectedOldLunch: nil,
+                                     startDate: Date(),
+                                     oldLunchesURLs: Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil))
+        self.lunchViewModel = LunchViewModel(lunchModel: self.lunchModel)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -44,7 +71,6 @@ class LunchesViewController: UIViewController {
         lunchView.tableView.dataSource = self
         lunchView.tableView.delegate = self
         
-        lunch.employeesUrlString = employeesUrlString
         setupSubscribers()
     }
     
@@ -53,24 +79,36 @@ class LunchesViewController: UIViewController {
 // MARK: - UITableViewDataSource
 extension LunchesViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return lunch.currentlyShownLunchInformations.count
+        return lunchDays.lunchDays.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return lunch.currentlyShownLunchInformations[section].lunchTeams.count
+        guard lunchDays.lunchDays.indices.contains(section) else {
+            handleErorr(error: LunchViewControllerErrors.numberOfRowsInSectionError(description: "Number of sections is out of indices fo lunch days array."))
+            return 0
+        }
+        return lunchDays.lunchDays[section].lunchTeams.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: String(describing: LunchTeamCell.self), for: indexPath) as? LunchTeamCell else {
+            handleErorr(error: LunchViewControllerErrors.lunchTeamCellDequeuError(description: "LunchTeamCell couldn't be dequeued by UITableView."))
             return UITableViewCell()
         }
-        let oneTeam: Lunch.LunchTeam = lunch.currentlyShownLunchInformations[indexPath.section].lunchTeams[indexPath.row]
+        guard lunchDays.lunchDays.indices.contains(indexPath.section), lunchDays.lunchDays[indexPath.section].lunchTeams.indices.contains(indexPath.row) else {
+            handleErorr(error: LunchViewControllerErrors.cellForRowAtError(description: "Lunch days or lunch teams indices out of range."))
+            return cell
+        }
+        let oneTeam: LunchTeam = lunchDays.lunchDays[indexPath.section].lunchTeams[indexPath.row]
         cell.teamLabel.text = oneTeam.firstEmployee + " - " + oneTeam.secondEmployee
         return cell
     }
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let lunchDay: Lunch.LunchDay = lunch.currentlyShownLunchInformations[section]
-        return  lunchDay.dayName + "  " + dateFormatter.string(from: lunchDay.date)
+        guard lunchDays.lunchDays.indices.contains(section) else {
+            return nil
+        }
+        let lunchDay: LunchDay = lunchDays.lunchDays[section]
+        return  lunchDay.dayName + "  " + LunchesViewController.dateFormatter.string(from: lunchDay.date)
     }
 }
 
@@ -94,15 +132,15 @@ extension LunchesViewController: UIAdaptivePresentationControllerDelegate {
 // MARK: - Button actions
 private extension LunchesViewController {
     @objc func filterAction() {
-        guard !lunch.employees.isEmpty else { return }
+        guard !lunchDays.employees.isEmpty else { return }
         
         var empoyeeNames: [String] = [noneFilter]
-        for empoyee in lunch.employees {
+        for empoyee in lunchDays.employees {
             empoyeeNames.append(empoyee.name)
         }
         
         let filterViewController = FilterViewController()
-        filterViewController.selectedEmployeeName = lunch.filterString
+        filterViewController.selectedEmployeeName = lunchModel.filterString
         filterViewController.employeeNames = empoyeeNames
         filterViewController.presentationController?.delegate = self
         filterViewController.dismissClosure = { [weak self] in
@@ -113,19 +151,19 @@ private extension LunchesViewController {
     }
     
     @objc func filterResetAction() {
-        lunch.filterString = nil
+        lunchModel.filterString = nil
     }
     
     @objc func loadResetAction() {
-        lunch.selectedOldLunch = nil
+        lunchModel.selectedOldLunch = nil
     }
     
     @objc func loadOldLunchesAction() {
-        guard !lunch.oldLunches.isEmpty else { return }
+        guard !lunchViewModel.oldLunches.isEmpty else { return }
         
         let loadViewController = LoadViewController()
-        loadViewController.selectedOldLunch = lunch.selectedOldLunch
-        loadViewController.oldLunches = lunch.oldLunches
+        loadViewController.selectedOldLunch = lunchModel.selectedOldLunch
+        loadViewController.oldLunches = lunchViewModel.oldLunches
         loadViewController.presentationController?.delegate = self
         loadViewController.dismissClosure = { [weak self] in
             guard let self = self else { return }
@@ -135,9 +173,9 @@ private extension LunchesViewController {
     }
     
     @objc func saveLunchAction() {
-        let fileName: String = "OldLunch_" + self.dateFormatter.string(from: self.lunch.startDate) + "-" + self.dateFormatter.string(from: self.lunch.endDate) + ".json"
+        let fileName: String = "OldLunch_" + LunchesViewController.dateFormatter.string(from: lunchDays.startDate) + "-" + LunchesViewController.dateFormatter.string(from: lunchDays.endDate) + ".json"
         do {
-            let jsonData = try JSONEncoder().encode(lunch)
+            let jsonData = try JSONEncoder().encode(lunchDays)
             guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
             let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
             do {
@@ -152,12 +190,12 @@ private extension LunchesViewController {
     }
     
     @objc func getNewLunchSchedule() {
-        lunch.employeesUrlString = employeesUrlString
+        lunchModel.employeesUrlString = employeesUrlString
     }
     
     @objc func resetScheduleDateAction() {
-        lunch.setStartDate(date: Date())
-        lunchView.scheduleDateLabel.text = "Starting date: \(dateFormatter.string(from: lunch.startDate))"
+        lunchModel.startDate = Date()
+        lunchView.scheduleDateLabel.text = "Starting date: \(LunchesViewController.dateFormatter.string(from: lunchModel.startDate))"
     }
     
     @objc func setScheduleDateAction() {
@@ -167,8 +205,8 @@ private extension LunchesViewController {
     
     @objc func datePickerSetAction() {
         setupViewsForDatePicker()
-        lunch.setStartDate(date: lunchView.datePickerView.date)
-        lunchView.scheduleDateLabel.text = "Starting date: \(dateFormatter.string(from: lunch.startDate))"
+        lunchModel.startDate = lunchView.datePickerView.date
+        lunchView.scheduleDateLabel.text = "Starting date: \(LunchesViewController.dateFormatter.string(from: lunchModel.startDate))"
     }
     
     @objc func datePickerCancelAction() {
@@ -189,33 +227,46 @@ private extension LunchesViewController {
     }
 }
 
+// MARK: - Error handling
+private extension LunchesViewController {
+    func handleErorr(error: Error) {
+        print("\(error) has been handled.")
+    }
+}
+
 // MARK: - Helper methods
 private extension LunchesViewController {
     func setLunchFilterString(from filterViewController: FilterViewController) {
         guard filterViewController.selectedEmployeeName != self.noneFilter,
               let filterString = filterViewController.selectedEmployeeName else {
-            self.lunch.filterString = nil
+            self.lunchModel.filterString = nil
             return
         }
-        self.lunch.filterString = filterString
+        self.lunchModel.filterString = filterString
     }
     
     func setOldLunchURL(from loadViewController: LoadViewController) {
         guard let safeOldFilterString = loadViewController.selectedOldLunch else {
-            self.lunch.selectedOldLunch = nil
+            self.lunchModel.selectedOldLunch = nil
             return
         }
-        self.lunch.selectedOldLunch = safeOldFilterString
+        self.lunchModel.selectedOldLunch = safeOldFilterString
     }
     
     func setupSubscribers() {
-        lunch.$currentlyShownLunchInformations
-            .sink(receiveValue: { _ in
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    self.lunchView.tableView.reloadData()
+        lunchViewModel.$shownLunchDays
+            .sink { [weak self] (result) in
+                guard let self = self else { return }
+                switch result {
+                case let .success(newLunchDays):
+                    let goodDays = newLunchDays ?? LunchDays.emptyDays
+                    DispatchQueue.main.async {
+                        self.lunchDays = goodDays
+                    }
+                case let .failure(error):
+                    self.handleErorr(error: error)
                 }
-            })
+            }
             .store(in: &subscriptions)
         
         lunch.$employees
@@ -318,17 +369,15 @@ private extension LunchesViewController {
             }
             let startDateString = "2020-" + monthString + "01"
             
-            dateFormatter.dateFormat = "yyyy-MM-dd"
-            let date = dateFormatter.date(from: startDateString) ?? Date()
-            lunch.setStartDate(date: date)
-            dateFormatter.dateFormat = "dd-MM-yyyy"
+            LunchesViewController.dateFormatter.dateFormat = "yyyy-MM-dd"
+            let date = LunchesViewController.dateFormatter.date(from: startDateString) ?? Date()
+            LunchesViewController.dateFormatter.dateFormat = "dd-MM-yyyy"
             
-            let newLunch: [Lunch.LunchDay] = lunch.generateLunchTeams(for: lunch.employees)
-            lunch.changeLunches(with: newLunch)
+            let newLunchDays: LunchDays = lunchViewModel.generateLunchDays(for: lunchDays.employees, startDate: date) ?? LunchDays.emptyDays
             
-            let fileName: String = "OldLunch_" + self.dateFormatter.string(from: self.lunch.startDate) + "-" + self.dateFormatter.string(from: self.lunch.endDate) + ".json"
+            let fileName: String = "OldLunch_" + LunchesViewController.dateFormatter.string(from: newLunchDays.startDate) + "-" + LunchesViewController.dateFormatter.string(from: newLunchDays.endDate) + ".json"
             do {
-                let jsonData = try JSONEncoder().encode(lunch)
+                let jsonData = try JSONEncoder().encode(newLunchDays)
                 guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
                 let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
                 do {
