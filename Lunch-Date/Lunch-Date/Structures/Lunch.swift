@@ -32,11 +32,7 @@ class Lunch: ObservableObject, Codable {
     // MARK: - Properties
     // MARK: - Published properties
     @Published var employeesUrlString: String = ""
-    @Published var employees: [Employee] = [] {
-        didSet {
-            print("\(employees.count)")
-        }
-    }
+    @Published var employees: [Employee] = []
     @Published var currentlyShownLunchInformations: [LunchDay] = []
     @Published var filterString: String? = nil
     @Published var showActivityIndicatorView = false
@@ -51,7 +47,7 @@ class Lunch: ObservableObject, Codable {
     }()
     private var subscriptions = Set<AnyCancellable>()
     
-    private (set) var startDate: Date = Date()
+    private (set) var startDate: Date = Lunch.changeDateIfWeekend(date: Date())
     private (set) var endDate: Date = Date()
     @Published private (set) var lunchDays: [LunchDay] = []
     
@@ -137,12 +133,6 @@ private extension Lunch {
             }
             .eraseToAnyPublisher()
         
-        $employees
-            .sink { (employees) in
-                print(employees)
-            }
-            .store(in: &subscriptions)
-        
         lunchesPublisher
             .map({ [weak self] (lunchDays) -> [LunchDay]? in
                 guard let self = self else { return nil }
@@ -218,6 +208,16 @@ private extension Lunch {
                 }
             }
             .store(in: &subscriptions)
+        
+        $selectedOldLunch
+            .map { (url) -> Date? in
+                if url == nil { return Lunch.changeDateIfWeekend(date: Date()) }
+                else { return nil }
+            }
+            .compactMap({ $0 })
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.startDate, on: self)
+            .store(in: &subscriptions)
     }
 }
 
@@ -228,13 +228,13 @@ extension Lunch {
     }
     
     func setStartDate(date: Date) {
-        startDate = changeDateIfWeekend(date: date)
+        startDate = Lunch.changeDateIfWeekend(date: date)
     }
 }
 
 // MARK: - Helper methods
 extension Lunch {
-    func changeDateIfWeekend(date: Date) -> Date {
+    static func changeDateIfWeekend(date: Date) -> Date {
         var newDate = date
         if Calendar.current.isDateInWeekend(date) {
             var dateComponents = DateComponents()
@@ -263,7 +263,7 @@ extension Lunch {
                                         secondEmployee: newEmployees[1].name)
                 let lunchDay = LunchDay(lunchTeams: [oneTeam],
                                         date: futureDate,
-                                        dayName: self.dayNameDateFormatter.string(from: self.changeDateIfWeekend(date: futureDate)))
+                                        dayName: self.dayNameDateFormatter.string(from: Lunch.changeDateIfWeekend(date: futureDate)))
                 self.endDate = futureDate
                 return [lunchDay]
             }
@@ -297,7 +297,7 @@ extension Lunch {
                 dateComponents.day = 1
             }
             futureDate = Calendar.current.date(byAdding: dateComponents, to: futureDate) ?? Date()
-            futureDate = self.changeDateIfWeekend(date: futureDate)
+            futureDate = Lunch.changeDateIfWeekend(date: futureDate)
             let oneLunchDay = LunchDay(lunchTeams: oneLunchDayTeams,
                                        date: futureDate,
                                        dayName: self.dayNameDateFormatter.string(from: futureDate))
