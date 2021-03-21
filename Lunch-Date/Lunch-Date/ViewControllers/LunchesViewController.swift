@@ -318,6 +318,25 @@ class LunchesViewController: UIViewController {
         return stackView
     }()
     
+    let backgroundView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor.white.withAlphaComponent(0.97)
+        return view
+    }()
+    
+    let loadingLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.numberOfLines = 0
+        label.text = "LOADING..."
+        label.font = .boldSystemFont(ofSize: 20.0)
+        label.contentMode = .center
+        return label
+    }()
+    
+    let activityView = UIActivityIndicatorView(style: .large)
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -514,6 +533,20 @@ private extension LunchesViewController {
         scheduleStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
         scheduleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         scheduleStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
+        
+        backgroundView.addSubview(loadingLabel)
+        loadingLabel.centerXAnchor.constraint(equalTo: backgroundView.centerXAnchor).isActive = true
+        loadingLabel.centerYAnchor.constraint(equalTo: backgroundView.centerYAnchor, constant: -50.0).isActive = true
+        
+        view.addSubview(backgroundView)
+        backgroundView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        backgroundView.isHidden = true
+        
+        activityView.center = view.center
+        view.addSubview(activityView)
     }
     
     func setupFilterStackView() {
