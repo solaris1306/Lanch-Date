@@ -22,9 +22,6 @@
 		AC6939392604E0B30014402B /* ContentSizedTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6939382604E0B30014402B /* ContentSizedTableView.swift */; };
 		AC69393A2604E0B30014402B /* ContentSizedTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6939382604E0B30014402B /* ContentSizedTableView.swift */; };
 		AC69393B2604E0B30014402B /* ContentSizedTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6939382604E0B30014402B /* ContentSizedTableView.swift */; };
-		AC9D2ACD26020E5200C2A50A /* Lunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2ACC26020E5200C2A50A /* Lunch.swift */; };
-		AC9D2ACE26020E5200C2A50A /* Lunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2ACC26020E5200C2A50A /* Lunch.swift */; };
-		AC9D2ACF26020E5200C2A50A /* Lunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9D2ACC26020E5200C2A50A /* Lunch.swift */; };
 		ACBA0FD32606647700CD13CA /* LoadViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBA0FD22606647700CD13CA /* LoadViewController.swift */; };
 		ACBA0FD42606647700CD13CA /* LoadViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBA0FD22606647700CD13CA /* LoadViewController.swift */; };
 		ACBA0FD52606647700CD13CA /* LoadViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBA0FD22606647700CD13CA /* LoadViewController.swift */; };
@@ -87,7 +84,6 @@
 		AC6939242604BC420014402B /* LunchesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LunchesViewController.swift; sourceTree = "<group>"; };
 		AC6939312604BD8D0014402B /* FilterViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterViewController.swift; sourceTree = "<group>"; };
 		AC6939382604E0B30014402B /* ContentSizedTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSizedTableView.swift; sourceTree = "<group>"; };
-		AC9D2ACC26020E5200C2A50A /* Lunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lunch.swift; sourceTree = "<group>"; };
 		ACBA0FD22606647700CD13CA /* LoadViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadViewController.swift; sourceTree = "<group>"; };
 		ACC26C0D2601483B009DA011 /* Lunch-Date.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lunch-Date.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACC26C102601483B009DA011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -176,7 +172,6 @@
 		AC9D2ACB26020E3A00C2A50A /* Structures */ = {
 			isa = PBXGroup;
 			children = (
-				AC9D2ACC26020E5200C2A50A /* Lunch.swift */,
 				AC4AD1EB2603482B0092419A /* Employee.swift */,
 				ACC8B0792607D87E00F62B9D /* LunchStructures.swift */,
 			);
@@ -454,7 +449,6 @@
 				ACC8B0702607D83500F62B9D /* LunchModel.swift in Sources */,
 				ACBA0FD32606647700CD13CA /* LoadViewController.swift in Sources */,
 				ACC26C1B2601483B009DA011 /* Lunch_Date.xcdatamodeld in Sources */,
-				AC9D2ACD26020E5200C2A50A /* Lunch.swift in Sources */,
 				ACC8B0812607DAEB00F62B9D /* LunchViewModel.swift in Sources */,
 				ACC26C132601483B009DA011 /* SceneDelegate.swift in Sources */,
 			);
@@ -472,7 +466,6 @@
 				AC4AD1ED2603482B0092419A /* Employee.swift in Sources */,
 				ACC8B0712607D83500F62B9D /* LunchModel.swift in Sources */,
 				AC69393A2604E0B30014402B /* ContentSizedTableView.swift in Sources */,
-				AC9D2ACE26020E5200C2A50A /* Lunch.swift in Sources */,
 				ACC8B0822607DAEB00F62B9D /* LunchViewModel.swift in Sources */,
 				ACC26C49260148C0009DA011 /* LunchTeamCell.swift in Sources */,
 				AC69391E2604BB050014402B /* FilterCell.swift in Sources */,
@@ -492,7 +485,6 @@
 				AC4AD1EE2603482B0092419A /* Employee.swift in Sources */,
 				ACC8B0722607D83500F62B9D /* LunchModel.swift in Sources */,
 				AC69393B2604E0B30014402B /* ContentSizedTableView.swift in Sources */,
-				AC9D2ACF26020E5200C2A50A /* Lunch.swift in Sources */,
 				ACC8B0832607DAEB00F62B9D /* LunchViewModel.swift in Sources */,
 				ACC26C4A260148C0009DA011 /* LunchTeamCell.swift in Sources */,
 				AC69391F2604BB050014402B /* FilterCell.swift in Sources */,
