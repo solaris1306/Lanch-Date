@@ -8,7 +8,7 @@
 import UIKit
 
 class LunchTeamCell: UITableViewCell {
-    // MARK: - Properties
+    // MARK: - Subviews
     let teamLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false

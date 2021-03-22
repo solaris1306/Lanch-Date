@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 class LunchModel: ObservableObject {
-    // MARK: - Properties
+    // MARK: - Published properties
     @Published var employeesUrlString: String
     @Published var filterString: String?
     @Published var selectedOldLunch: URL?

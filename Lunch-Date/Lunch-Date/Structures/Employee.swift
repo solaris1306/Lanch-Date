@@ -8,7 +8,7 @@
 import Foundation
 
 struct Employee: Codable, Identifiable {
-    // MARK: - Properties
+    // MARK: - Public properties
     let id: Int
     let name: String
     

@@ -8,7 +8,7 @@
 import UIKit
 
 class FilterCell: UITableViewCell {
-    // MARK: - Properties
+    // MARK: - Subviews
     let filterLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false

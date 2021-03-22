@@ -199,6 +199,7 @@ private extension LunchesViewController {
     @objc func datePickerSetAction() {
         setupViewsForDatePicker()
         lunchModel.startDate = lunchView.datePickerView.date
+        lunchView.scheduleDateLabel.text = "Starting date: \(LunchesViewController.dateFormatter.string(from: self.lunchModel.startDate))"
     }
     
     @objc func datePickerCancelAction() {
@@ -283,7 +284,7 @@ private extension LunchesViewController {
             .assign(to: \.lunchView.loadButton.isEnabled, on: self)
             .store(in: &subscriptions)
         
-        lunchViewModel.$currentButtonEnabledPublisher
+        lunchViewModel.$currentButtonEnabled
             .receive(on: DispatchQueue.main)
             .assign(to: \.lunchView.scheduleDateCurrentButton.isEnabled, on: self)
             .store(in: &subscriptions)

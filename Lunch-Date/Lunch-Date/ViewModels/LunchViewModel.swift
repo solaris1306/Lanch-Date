@@ -42,9 +42,11 @@ extension LunchError {
 class LunchViewModel: ObservableObject {
     // MARK: - Public properties
     let lunchModel: LunchModel
+    
+    // MARK: - Published public properties
     @Published private (set) var shownLunchDays: Result<LunchDays?, Error> = .success(nil)
     @Published private (set) var filterStrings: [String] = []
-    @Published private (set) var currentButtonEnabledPublisher: Bool = false
+    @Published private (set) var currentButtonEnabled: Bool = false
     @Published private (set) var oldLunches: [URL] = []
     @Published private (set) var oldLunchDays: Result<LunchDays?, Error> = .success(nil)
     @Published private (set) var oldLunchDaysURL: URL? = nil
@@ -189,7 +191,7 @@ private extension LunchViewModel {
                 if let safeCurrentResult = currentResult, let safeFilteredResult = filteredResults, safeFilteredResult.id == safeCurrentResult.id {
                     currentButtonEnabled = false
                 }
-                self.currentButtonEnabledPublisher = currentButtonEnabled
+                self.currentButtonEnabled = currentButtonEnabled
                 
                 switch self.oldLunchDays {
                 case let .success(newDays):
