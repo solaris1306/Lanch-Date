@@ -235,28 +235,37 @@ private extension LunchesViewController {
 // MARK: - Error handling
 private extension LunchesViewController {
     func handleErorr(error: Error) {
-        print("\(error) has been handled.")
+        var message = "Message"
+        var dismissClosure: (() -> ())? = nil
+        if let lunchError = error as? LunchError {
+            message = lunchError.description
+            switch lunchError {
+            case .filterStringIsNotFound:
+                dismissClosure = {
+                    self.lunchModel.filterString = nil
+                }
+            case .selectedOldURLNotFound:
+                dismissClosure = {
+                    self.lunchModel.selectedOldLunch = nil
+                }
+            default:
+                break
+            }
+        } else if let lunchControllerError = error as? LunchViewControllerErrors {
+            message = lunchControllerError.description
+        } else {
+            message = error.localizedDescription
+        }
+        
+        DispatchQueue.main.async { [weak self] in
+            let alertController = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+            self?.present(alertController, animated: true, completion: dismissClosure)
+        }
     }
 }
 
-// MARK: - Helper methods
+// MARK: - Configure subscribers
 private extension LunchesViewController {
-    func setLunchFilterString(from filterViewController: FilterViewController) {
-        guard let filterString = filterViewController.selectedEmployeeName else {
-            self.lunchModel.filterString = nil
-            return
-        }
-        self.lunchModel.filterString = filterString
-    }
-    
-    func setOldLunchURL(from loadViewController: LoadViewController) {
-        guard let safeOldFilterString = loadViewController.selectedOldLunch else {
-            self.lunchModel.selectedOldLunch = nil
-            return
-        }
-        self.lunchModel.selectedOldLunch = safeOldFilterString
-    }
-    
     func setupSubscribers() {
         lunchViewModel.$shownLunchDays
             .sink { [weak self] (result) in
@@ -329,6 +338,37 @@ private extension LunchesViewController {
                 }
             }
             .store(in: &subscriptions)
+        
+        lunchViewModel.$oldLunchDays
+            .sink { [weak self] (result) in
+                guard let self = self else { return }
+                switch result {
+                case .success(_):
+                    break
+                case let .failure(error):
+                    self.handleErorr(error: error)
+                }
+            }
+            .store(in: &subscriptions)
+    }
+}
+
+// MARK: - Helper methods
+private extension LunchesViewController {
+    func setLunchFilterString(from filterViewController: FilterViewController) {
+        guard let filterString = filterViewController.selectedEmployeeName else {
+            self.lunchModel.filterString = nil
+            return
+        }
+        self.lunchModel.filterString = filterString
+    }
+    
+    func setOldLunchURL(from loadViewController: LoadViewController) {
+        guard let safeOldFilterString = loadViewController.selectedOldLunch else {
+            self.lunchModel.selectedOldLunch = nil
+            return
+        }
+        self.lunchModel.selectedOldLunch = safeOldFilterString
     }
     
     func setupViewsForDatePicker() {
