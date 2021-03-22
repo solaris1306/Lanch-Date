@@ -46,7 +46,10 @@ class LunchViewModel: ObservableObject {
     @Published private (set) var filterStrings: [String] = []
     @Published private (set) var currentButtonEnabledPublisher: Bool = false
     @Published private (set) var oldLunches: [URL] = []
-    @Published private (set) var oldLunchDays: Result<(LunchDays?, URL?), Error> = .success((nil, nil))
+    @Published private (set) var oldLunchDays: Result<LunchDays?, Error> = .success(nil)
+    @Published private (set) var oldLunchDaysURL: URL? = nil
+    @Published private (set) var newScheduleEnabled: Bool = true
+    @Published private (set) var scheduleDateLabelText: String? = nil
     
     // MARK: - Private properties
     @Published private var filteredLunchDays: Result<LunchDays?, Error> = .success(nil) {
@@ -162,32 +165,46 @@ private extension LunchViewModel {
             .sink(receiveValue: { [weak self] (result) in
                 guard let self = self else { return }
                 
-                var enabled: Bool = false
+                var currentButtonEnabled: Bool = true
                 var currentResult: LunchDays? = nil
                 var filteredResults: LunchDays? = nil
+                var oldResults: LunchDays? = nil
+                var newScheduleEnabled: Bool = true
                 
                 switch result {
                 case let .success(newDays):
                     filteredResults = newDays
-                default:
-                    break
+                    newScheduleEnabled = filteredResults != nil
+                case .failure(_):
+                    newScheduleEnabled = false
                 }
                 
                 switch self.currentLunchDays {
                 case let .success(newDays):
                     currentResult = newDays
+                    currentButtonEnabled = currentResult != nil
+                case .failure(_):
+                    currentButtonEnabled = false
+                }
+                if let safeCurrentResult = currentResult, let safeFilteredResult = filteredResults, safeFilteredResult.id == safeCurrentResult.id {
+                    currentButtonEnabled = false
+                }
+                self.currentButtonEnabledPublisher = currentButtonEnabled
+                
+                switch self.oldLunchDays {
+                case let .success(newDays):
+                    oldResults = newDays
                 default:
                     break
                 }
-                
-                if let safeCurrentResult = currentResult {
-                    if let safeFilteredResult = filteredResults, safeFilteredResult.id == safeCurrentResult.id {
-                        enabled = false
-                    } else {
-                        enabled = true
+                if let safeFilteredResult = filteredResults {
+                    newScheduleEnabled = !safeFilteredResult.employees.isEmpty
+                    if let safeOldResult = oldResults, safeFilteredResult.id == safeOldResult.id {
+                        newScheduleEnabled = false
                     }
                 }
-                self.currentButtonEnabledPublisher = enabled
+                self.newScheduleEnabled = newScheduleEnabled
+                self.scheduleDateLabelText = newScheduleEnabled ? "Starting date: \(LunchesViewController.dateFormatter.string(from: self.lunchModel.startDate))" : nil
             })
             .store(in: &subscriptions)
     }
@@ -204,7 +221,9 @@ private extension LunchViewModel {
         
         lunchModel.$selectedOldLunch
             .sink { [weak self] (url) in
-                guard let self = self, let safeUrl = url else { return }
+                guard let self = self else { return }
+                self.oldLunchDaysURL = url
+                guard let safeUrl = url else { return }
                 guard let selectedURL = self.oldLunches.first(where: { $0 == safeUrl }) else {
                     self.oldLunchDays = .failure(LunchError.selectedOldURLNotFound)
                     return
@@ -212,8 +231,9 @@ private extension LunchViewModel {
                 do {
                     let jsonData = try Data(contentsOf: selectedURL)
                     let oldLunchDays = try JSONDecoder().decode(LunchDays.self, from: jsonData)
-                    self.filteredLunchDays = .success(oldLunchDays)
-                    self.oldLunchDays = .success((oldLunchDays, url))
+                    let result: Result<LunchDays?, Error> = .success(oldLunchDays)
+                    self.oldLunchDays = result
+                    self.filteredLunchDays = self.oldLunchDays
                 } catch let error {
                     self.oldLunchDays = .failure(error)
                 }

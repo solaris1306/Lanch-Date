@@ -37,7 +37,6 @@ class LunchesViewController: UIViewController {
     private var subscriptions = Set<AnyCancellable>()
     private var lunchDays: LunchDays = LunchDays() {
         didSet {
-            lunchView.newScheduleButton.isEnabled = !lunchDays.employees.isEmpty && lunchModel.selectedOldLunch == nil
             lunchView.saveButton.isEnabled = !lunchDays.lunchDays.isEmpty
             lunchView.tableView.reloadData()
         }
@@ -161,7 +160,7 @@ private extension LunchesViewController {
     }
     
     @objc func loadResetAction() {
-        oldUrlIsDeselected()
+        lunchModel.selectedOldLunch = nil
         currentScheduleDateAction()
     }
     
@@ -189,7 +188,6 @@ private extension LunchesViewController {
     
     @objc func currentScheduleDateAction() {
         lunchModel.startDate = Date()
-        lunchView.scheduleDateLabel.text = "Starting date: \(LunchesViewController.dateFormatter.string(from: lunchModel.startDate))"
         lunchModel.currentButtonPublisher.send(())
     }
     
@@ -201,7 +199,6 @@ private extension LunchesViewController {
     @objc func datePickerSetAction() {
         setupViewsForDatePicker()
         lunchModel.startDate = lunchView.datePickerView.date
-        lunchView.scheduleDateLabel.text = "Starting date: \(LunchesViewController.dateFormatter.string(from: lunchModel.startDate))"
     }
     
     @objc func datePickerCancelAction() {
@@ -275,7 +272,7 @@ private extension LunchesViewController {
             .store(in: &subscriptions)
         
         lunchViewModel.$filterStrings
-            .map { !$0.isEmpty }
+            .map({ !$0.isEmpty })
             .receive(on: DispatchQueue.main)
             .assign(to: \.lunchView.filterButton.isEnabled, on: self)
             .store(in: &subscriptions)
@@ -287,30 +284,47 @@ private extension LunchesViewController {
             .store(in: &subscriptions)
         
         lunchViewModel.$currentButtonEnabledPublisher
-            .sink { [weak self] (enabled) in
-                guard let self = self else { return }
-                DispatchQueue.main.async {
-                    guard self.lunchView.scheduleDateCurrentButton.isEnabled != enabled else { return }
-                    self.lunchView.scheduleDateCurrentButton.isEnabled = enabled
-                }
-            }
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.lunchView.scheduleDateCurrentButton.isEnabled, on: self)
             .store(in: &subscriptions)
         
         lunchViewModel.$oldLunchDays
             .sink { [weak self] (result) in
                 guard let self = self else { return }
                 switch result {
-                case let .success(oldLunchesTuple):
-                    if oldLunchesTuple.0 == nil {
-                        self.oldUrlIsDeselected()
-                    } else {
-                        self.oldUrlIsSelected(url: oldLunchesTuple.1)
-                    }
+                case .success(_):
+                    break
                 case let .failure(error):
                     self.oldUrlIsDeselected()
                     self.handleError(error: error)
                 }
             }
+            .store(in: &subscriptions)
+        
+        lunchViewModel.$oldLunchDaysURL
+            .sink { [weak self] (url) in
+                guard let self = self else { return }
+                guard let safeUrl = url else {
+                    self.oldUrlIsDeselected()
+                    return
+                }
+                self.oldUrlIsSelected(url: safeUrl)
+            }
+            .store(in: &subscriptions)
+        
+        lunchViewModel.$newScheduleEnabled
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.lunchView.newScheduleButton.isEnabled, on: self)
+            .store(in: &subscriptions)
+        
+        lunchViewModel.$newScheduleEnabled
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.lunchView.scheduleDateSetButton.isEnabled, on: self)
+            .store(in: &subscriptions)
+        
+        lunchViewModel.$scheduleDateLabelText
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.lunchView.scheduleDateLabel.text, on: self)
             .store(in: &subscriptions)
     }
 }
@@ -347,17 +361,14 @@ private extension LunchesViewController {
         }
         lunchView.setScheduleDateButtonHeightConstraint.constant = 0.0
         lunchView.resetScheduleDateButtonHeightConstraint.constant = 0.0
-        lunchView.scheduleDateLabel.text = nil
         lunchView.loadResetButtonHeightConstraint.constant = 30.0
     }
     
     func oldUrlIsDeselected() {
-        lunchModel.selectedOldLunch = nil
         lunchView.loadLabel.text = nil
         lunchView.loadResetButtonHeightConstraint.constant = 0.0
         lunchView.setScheduleDateButtonHeightConstraint.constant = 30.0
         lunchView.resetScheduleDateButtonHeightConstraint.constant = 30.0
-        lunchView.scheduleDateLabel.text = "Starting date: \(LunchesViewController.dateFormatter.string(from: lunchModel.startDate))"
     }
     
     func filterIsEnabled(filterString: String) {
