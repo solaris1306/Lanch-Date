@@ -46,7 +46,7 @@ class LunchViewModel: ObservableObject {
     @Published private (set) var filterStrings: [String] = []
     @Published private (set) var currentButtonEnabledPublisher: Bool = false
     @Published private (set) var oldLunches: [URL] = []
-    @Published private (set) var oldLunchDays: Result<LunchDays?, Error> = .success(nil)
+    @Published private (set) var oldLunchDays: Result<(LunchDays?, URL?), Error> = .success((nil, nil))
     
     // MARK: - Private properties
     @Published private var filteredLunchDays: Result<LunchDays?, Error> = .success(nil) {
@@ -213,6 +213,7 @@ private extension LunchViewModel {
                     let jsonData = try Data(contentsOf: selectedURL)
                     let oldLunchDays = try JSONDecoder().decode(LunchDays.self, from: jsonData)
                     self.filteredLunchDays = .success(oldLunchDays)
+                    self.oldLunchDays = .success((oldLunchDays, url))
                 } catch let error {
                     self.oldLunchDays = .failure(error)
                 }

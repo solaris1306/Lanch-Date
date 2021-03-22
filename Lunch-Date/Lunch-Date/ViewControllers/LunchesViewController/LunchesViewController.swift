@@ -37,9 +37,9 @@ class LunchesViewController: UIViewController {
     private var subscriptions = Set<AnyCancellable>()
     private var lunchDays: LunchDays = LunchDays() {
         didSet {
-            self.lunchView.newScheduleButton.isEnabled = !lunchDays.employees.isEmpty
-            self.lunchView.saveButton.isEnabled = !lunchDays.lunchDays.isEmpty
-            self.lunchView.tableView.reloadData()
+            lunchView.newScheduleButton.isEnabled = !lunchDays.employees.isEmpty && lunchModel.selectedOldLunch == nil
+            lunchView.saveButton.isEnabled = !lunchDays.lunchDays.isEmpty
+            lunchView.tableView.reloadData()
         }
     }
     
@@ -157,11 +157,12 @@ private extension LunchesViewController {
     }
     
     @objc func filterResetAction() {
-        lunchModel.filterString = nil
+        filterIsDisabled()
     }
     
     @objc func loadResetAction() {
-        lunchModel.selectedOldLunch = nil
+        oldUrlIsDeselected()
+        currentScheduleDateAction()
     }
     
     @objc func loadOldLunchesAction() {
@@ -179,20 +180,7 @@ private extension LunchesViewController {
     }
     
     @objc func saveLunchAction() {
-        let fileName: String = "OldLunch_" + LunchesViewController.dateFormatter.string(from: lunchDays.startDate) + "-" + LunchesViewController.dateFormatter.string(from: lunchDays.endDate) + ".json"
-        do {
-            let jsonData = try JSONEncoder().encode(lunchDays)
-            guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-            let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
-            do {
-                try jsonData.write(to: pathWithFileName)
-                print("File name: \(pathWithFileName)")
-            } catch let error {
-                self.handleError(error: error)
-            }
-        } catch {
-            self.handleError(error: error)
-        }
+        saveShownLunchDays()
     }
     
     @objc func getNewLunchSchedule() {
@@ -269,6 +257,9 @@ private extension LunchesViewController {
                     }
                     let goodDays = newLunchDays ?? LunchDays()
                     DispatchQueue.main.async {
+                        if let safeFilterString = self.lunchModel.filterString {
+                            self.filterIsEnabled(filterString: safeFilterString)
+                        }
                         self.lunchDays = goodDays
                     }
                 case let .failure(error):
@@ -309,12 +300,12 @@ private extension LunchesViewController {
             .sink { [weak self] (result) in
                 guard let self = self else { return }
                 switch result {
-                case let .success(lunchDays):
-                    guard let _ = lunchDays else {
+                case let .success(oldLunchesTuple):
+                    if oldLunchesTuple.0 == nil {
                         self.oldUrlIsDeselected()
-                        break
+                    } else {
+                        self.oldUrlIsSelected(url: oldLunchesTuple.1)
                     }
-                    self.oldUrlIsSelected()
                 case let .failure(error):
                     self.oldUrlIsDeselected()
                     self.handleError(error: error)
@@ -328,18 +319,18 @@ private extension LunchesViewController {
 private extension LunchesViewController {
     func setLunchFilterString(from filterViewController: FilterViewController) {
         guard let filterString = filterViewController.selectedEmployeeName else {
-            self.lunchModel.filterString = nil
+            lunchModel.filterString = nil
             return
         }
-        self.lunchModel.filterString = filterString
+        lunchModel.filterString = filterString
     }
     
     func setOldLunchURL(from loadViewController: LoadViewController) {
         guard let safeOldFilterString = loadViewController.selectedOldLunch else {
-            self.lunchModel.selectedOldLunch = nil
+            lunchModel.selectedOldLunch = nil
             return
         }
-        self.lunchModel.selectedOldLunch = safeOldFilterString
+        lunchModel.selectedOldLunch = safeOldFilterString
     }
     
     func setupViewsForDatePicker() {
@@ -350,37 +341,51 @@ private extension LunchesViewController {
         lunchView.scheduleDateStackView.isHidden = !lunchView.scheduleDateStackView.isHidden
     }
     
-    func oldUrlIsSelected() {
-        self.lunchView.newScheduleButton.isEnabled = false
-        if let safeURL = self.lunchModel.selectedOldLunch {
-            self.lunchView.loadLabel.text = "Loaded lunch: \(safeURL.lastPathComponent)"
+    func oldUrlIsSelected(url: URL?) {
+        if let safeURL = url {
+            lunchView.loadLabel.text = safeURL.lastPathComponent
         }
-        self.lunchView.setScheduleDateButtonHeightConstraint.constant = 0.0
-        self.lunchView.resetScheduleDateButtonHeightConstraint.constant = 0.0
-        self.lunchView.loadResetButtonHeightConstraint.constant = 30.0
+        lunchView.setScheduleDateButtonHeightConstraint.constant = 0.0
+        lunchView.resetScheduleDateButtonHeightConstraint.constant = 0.0
+        lunchView.scheduleDateLabel.text = nil
+        lunchView.loadResetButtonHeightConstraint.constant = 30.0
     }
     
     func oldUrlIsDeselected() {
-        self.lunchModel.selectedOldLunch = nil
-        self.lunchView.newScheduleButton.isEnabled = !self.lunchDays.employees.isEmpty
-        self.lunchView.loadLabel.text = nil
-        self.lunchView.loadResetButtonHeightConstraint.constant = 0.0
-        self.lunchView.setScheduleDateButtonHeightConstraint.constant = 30.0
-        self.lunchView.resetScheduleDateButtonHeightConstraint.constant = 30.0
+        lunchModel.selectedOldLunch = nil
+        lunchView.loadLabel.text = nil
+        lunchView.loadResetButtonHeightConstraint.constant = 0.0
+        lunchView.setScheduleDateButtonHeightConstraint.constant = 30.0
+        lunchView.resetScheduleDateButtonHeightConstraint.constant = 30.0
+        lunchView.scheduleDateLabel.text = "Starting date: \(LunchesViewController.dateFormatter.string(from: lunchModel.startDate))"
     }
     
-    func filterIsEnabled() {
-        if let safeFilterString = self.lunchModel.filterString {
-            self.lunchView.filterLabel.text = "Filtered employee: \(safeFilterString)"
-        }
-        self.lunchView.resetButtonHeightConstraint.constant = 30.0
+    func filterIsEnabled(filterString: String) {
+        lunchView.filterLabel.text = "Filtered employee: \(filterString)"
+        lunchView.resetButtonHeightConstraint.constant = 30.0
     }
     
     func filterIsDisabled() {
-        self.lunchModel.filterString = nil
-        self.lunchView.filterLabel.text = nil
-        self.lunchView.resetButtonHeightConstraint.constant = 0.0
-        
+        lunchModel.filterString = nil
+        lunchView.filterLabel.text = nil
+        lunchView.resetButtonHeightConstraint.constant = 0.0
+    }
+    
+    func saveShownLunchDays() {
+        let fileName: String = "OldLunch_" + LunchesViewController.dateFormatter.string(from: lunchDays.startDate) + "-" + LunchesViewController.dateFormatter.string(from: lunchDays.endDate) + ".json"
+        do {
+            let jsonData = try JSONEncoder().encode(lunchDays)
+            guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+            let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
+            do {
+                try jsonData.write(to: pathWithFileName)
+                print("File name: \(pathWithFileName)")
+            } catch let error {
+                self.handleError(error: error)
+            }
+        } catch {
+            self.handleError(error: error)
+        }
     }
     
     func generateOldLunches() {
@@ -391,7 +396,7 @@ private extension LunchesViewController {
             } else {
                 monthString = "\(i)-"
             }
-            let startDateString = "2020-" + monthString + "01"
+            let startDateString = "2019-" + monthString + "01"
             
             LunchesViewController.dateFormatter.dateFormat = "yyyy-MM-dd"
             let date = LunchesViewController.dateFormatter.date(from: startDateString) ?? Date()
