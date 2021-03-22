@@ -14,7 +14,8 @@ class LunchModel: ObservableObject {
     @Published var filterString: String?
     @Published var selectedOldLunch: URL?
     @Published var startDate: Date
-    @Published private var oldLunchesURLs: [URL]? = nil
+    @Published var oldLunchesURLs: [URL]? = nil
+    var currentButtonPublisher = PassthroughSubject<Void, Never>()
     
     // MARK: - Initialization
     required init(employeesUrlString: String = "",

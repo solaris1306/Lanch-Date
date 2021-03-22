@@ -9,20 +9,33 @@ import UIKit
 import Combine
 
 enum LunchViewControllerErrors: Error {
-    case numberOfRowsInSectionError(description: String)
-    case lunchTeamCellDequeuError(description: String)
-    case cellForRowAtError(description: String)
+    case numberOfRowsInSectionError
+    case lunchTeamCellDequeuError
+    case cellForRowAtError
+}
+
+extension LunchViewControllerErrors {
+    var description: String {
+        switch self {
+        case .numberOfRowsInSectionError:
+            return "Number of sections is out of indices fo lunch days array."
+        case .lunchTeamCellDequeuError:
+            return "LunchTeamCell couldn't be dequeued by UITableView."
+        case .cellForRowAtError:
+            return "Lunch days or lunch teams indices out of range."
+        }
+    }
 }
 
 class LunchesViewController: UIViewController {
+    // MARK: - Static properties
+    public static let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
     // MARK: - Private properties
-    private let lunchViewModel: LunchViewModel
-    private let lunchModel: LunchModel
+    private var lunchViewModel: LunchViewModel
+    private var lunchModel: LunchModel
     let lunchView = LunchesView()
     private var subscriptions = Set<AnyCancellable>()
-    private let employeesUrlString: String = "https://jsonplaceholder.typicode.com/users"
-    private let noneFilter: String = "None"
-    private var lunchDays: LunchDays = LunchDays.emptyDays {
+    private var lunchDays: LunchDays = LunchDays() {
         didSet {
             self.lunchView.tableView.reloadData()
         }
@@ -38,14 +51,10 @@ class LunchesViewController: UIViewController {
     }()
     
     // MARK: - Initialization
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-        self.lunchModel = LunchModel(employeesUrlString: self.employeesUrlString,
-                                     filterString: nil,
-                                     selectedOldLunch: nil,
-                                     startDate: Date(),
-                                     oldLunchesURLs: Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil))
-        self.lunchViewModel = LunchViewModel(lunchModel: self.lunchModel)
+    init(lunchModel: LunchModel, lunchViewModel: LunchViewModel) {
+        self.lunchModel = lunchModel
+        self.lunchViewModel = lunchViewModel
+        super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -84,7 +93,7 @@ extension LunchesViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         guard lunchDays.lunchDays.indices.contains(section) else {
-            handleErorr(error: LunchViewControllerErrors.numberOfRowsInSectionError(description: "Number of sections is out of indices fo lunch days array."))
+            handleErorr(error: LunchViewControllerErrors.numberOfRowsInSectionError)
             return 0
         }
         return lunchDays.lunchDays[section].lunchTeams.count
@@ -92,11 +101,11 @@ extension LunchesViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: String(describing: LunchTeamCell.self), for: indexPath) as? LunchTeamCell else {
-            handleErorr(error: LunchViewControllerErrors.lunchTeamCellDequeuError(description: "LunchTeamCell couldn't be dequeued by UITableView."))
+            handleErorr(error: LunchViewControllerErrors.lunchTeamCellDequeuError)
             return UITableViewCell()
         }
         guard lunchDays.lunchDays.indices.contains(indexPath.section), lunchDays.lunchDays[indexPath.section].lunchTeams.indices.contains(indexPath.row) else {
-            handleErorr(error: LunchViewControllerErrors.cellForRowAtError(description: "Lunch days or lunch teams indices out of range."))
+            handleErorr(error: LunchViewControllerErrors.cellForRowAtError)
             return cell
         }
         let oneTeam: LunchTeam = lunchDays.lunchDays[indexPath.section].lunchTeams[indexPath.row]
@@ -132,16 +141,11 @@ extension LunchesViewController: UIAdaptivePresentationControllerDelegate {
 // MARK: - Button actions
 private extension LunchesViewController {
     @objc func filterAction() {
-        guard !lunchDays.employees.isEmpty else { return }
-        
-        var empoyeeNames: [String] = [noneFilter]
-        for empoyee in lunchDays.employees {
-            empoyeeNames.append(empoyee.name)
-        }
+        guard !lunchViewModel.filterStrings.isEmpty else { return }
         
         let filterViewController = FilterViewController()
         filterViewController.selectedEmployeeName = lunchModel.filterString
-        filterViewController.employeeNames = empoyeeNames
+        filterViewController.employeeNames = lunchViewModel.filterStrings
         filterViewController.presentationController?.delegate = self
         filterViewController.dismissClosure = { [weak self] in
             guard let self = self else { return }
@@ -190,12 +194,13 @@ private extension LunchesViewController {
     }
     
     @objc func getNewLunchSchedule() {
-        lunchModel.employeesUrlString = employeesUrlString
+        lunchModel.employeesUrlString = LunchesViewController.employeesUrlString
     }
     
-    @objc func resetScheduleDateAction() {
+    @objc func currentScheduleDateAction() {
         lunchModel.startDate = Date()
         lunchView.scheduleDateLabel.text = "Starting date: \(LunchesViewController.dateFormatter.string(from: lunchModel.startDate))"
+        lunchModel.currentButtonPublisher.send(())
     }
     
     @objc func setScheduleDateAction() {
@@ -220,7 +225,7 @@ private extension LunchesViewController {
         lunchView.loadResetButton.addTarget(self, action: #selector(loadResetAction), for: .touchUpInside)
         lunchView.saveButton.addTarget(self, action: #selector(saveLunchAction), for: .touchUpInside)
         lunchView.newScheduleButton.addTarget(self, action: #selector(getNewLunchSchedule), for: .touchUpInside)
-        lunchView.scheduleDateResetButton.addTarget(self, action: #selector(resetScheduleDateAction), for: .touchUpInside)
+        lunchView.scheduleDateCurrentButton.addTarget(self, action: #selector(currentScheduleDateAction), for: .touchUpInside)
         lunchView.scheduleDateSetButton.addTarget(self, action: #selector(setScheduleDateAction), for: .touchUpInside)
         lunchView.datePickerCancelButton.addTarget(self, action: #selector(datePickerCancelAction), for: .touchUpInside)
         lunchView.datePickerSetButton.addTarget(self, action: #selector(datePickerSetAction), for: .touchUpInside)
@@ -237,8 +242,7 @@ private extension LunchesViewController {
 // MARK: - Helper methods
 private extension LunchesViewController {
     func setLunchFilterString(from filterViewController: FilterViewController) {
-        guard filterViewController.selectedEmployeeName != self.noneFilter,
-              let filterString = filterViewController.selectedEmployeeName else {
+        guard let filterString = filterViewController.selectedEmployeeName else {
             self.lunchModel.filterString = nil
             return
         }
@@ -259,95 +263,71 @@ private extension LunchesViewController {
                 guard let self = self else { return }
                 switch result {
                 case let .success(newLunchDays):
-                    let goodDays = newLunchDays ?? LunchDays.emptyDays
+                    let goodDays = newLunchDays ?? LunchDays()
                     DispatchQueue.main.async {
                         self.lunchDays = goodDays
                     }
                 case let .failure(error):
+                    DispatchQueue.main.async {
+                        self.lunchDays = LunchDays()
+                    }
                     self.handleErorr(error: error)
                 }
             }
             .store(in: &subscriptions)
         
-        lunch.$employees
+        lunchViewModel.$filterStrings
             .map { !$0.isEmpty }
             .receive(on: DispatchQueue.main)
             .assign(to: \.lunchView.filterButton.isEnabled, on: self)
             .store(in: &subscriptions)
         
-        lunch.$filterString
-            .map { (filterString) -> String? in
-                guard let safeString = filterString else { return nil }
-                return "Filtered employee: \(safeString)"
+        lunchModel.$filterString
+            .sink { [weak self] (filterString) in
+                guard let self = self else { return }
+                guard let safeFilterString = filterString else {
+                    self.lunchView.filterLabel.text = nil
+                    self.lunchView.resetButtonHeightConstraint.constant = 0.0
+                    return
+                }
+                self.lunchView.filterLabel.text = "Filtered employee: \(safeFilterString)"
+                self.lunchView.resetButtonHeightConstraint.constant = 30.0
             }
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.lunchView.filterLabel.text, on: self)
             .store(in: &subscriptions)
         
-        lunch.$filterString
-            .map { (filterString) -> CGFloat in
-                guard filterString != nil else { return 0.0 }
-                return 30.0
-            }
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.lunchView.resetButtonHeightConstraint.constant, on: self)
-            .store(in: &subscriptions)
-        
-        lunch.$oldLunches
+        lunchViewModel.$oldLunches
             .map({ !$0.isEmpty })
             .receive(on: DispatchQueue.main)
             .assign(to: \.lunchView.loadButton.isEnabled, on: self)
             .store(in: &subscriptions)
         
-        lunch.$selectedOldLunch
-            .map { $0 == nil }
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.lunchView.newScheduleButton.isEnabled, on: self)
+        lunchModel.$selectedOldLunch
+            .sink { [weak self] (url) in
+                guard let self = self else { return }
+                guard let safeURL = url else {
+                    self.lunchView.newScheduleButton.isEnabled = true
+                    self.lunchView.loadLabel.text = nil
+                    self.lunchView.loadResetButtonHeightConstraint.constant = 0.0
+                    self.lunchView.setScheduleDateButtonHeightConstraint.constant = 30.0
+                    self.lunchView.resetScheduleDateButtonHeightConstraint.constant = 30.0
+                    return
+                }
+                self.lunchView.newScheduleButton.isEnabled = true
+                self.lunchView.loadLabel.text = "Loaded lunch: \(safeURL.lastPathComponent)"
+                self.lunchView.setScheduleDateButtonHeightConstraint.constant = 0.0
+                self.lunchView.resetScheduleDateButtonHeightConstraint.constant = 0.0
+                self.lunchView.loadResetButtonHeightConstraint.constant = 30.0
+            }
             .store(in: &subscriptions)
         
-        lunch.$selectedOldLunch
-            .map { (oldUrl) -> CGFloat in
-                guard oldUrl != nil else { return 0.0 }
-                return 30.0
+        lunchViewModel.$currentButtonEnabledPublisher
+            .sink { [weak self] (enabled) in
+                guard let self = self else { return }
+                DispatchQueue.main.async {
+                    guard self.lunchView.scheduleDateCurrentButton.isEnabled != enabled else { return }
+                    self.lunchView.scheduleDateCurrentButton.isEnabled = enabled
+                }
             }
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.lunchView.loadResetButtonHeightConstraint.constant, on: self)
-            .store(in: &subscriptions)
-        
-        lunch.$selectedOldLunch
-            .map { (oldUrl) -> String? in
-                guard let safeUrl = oldUrl else { return nil }
-                return "Loaded lunch: \(safeUrl.lastPathComponent)"
-            }
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.lunchView.loadLabel.text, on: self)
-            .store(in: &subscriptions)
-        
-        lunch.$selectedOldLunch
-            .map { [weak self] (oldUrl) -> String? in
-                guard let self = self, oldUrl == nil else { return nil }
-                return "Starting date: \(self.dateFormatter.string(from: self.lunch.startDate))"
-            }
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.lunchView.scheduleDateLabel.text, on: self)
-            .store(in: &subscriptions)
-
-        lunch.$selectedOldLunch
-            .map { (oldUrl) -> CGFloat in
-                guard oldUrl == nil else { return 0.0 }
-                return 30.0
-            }
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.lunchView.setScheduleDateButtonHeightConstraint.constant, on: self)
-            .store(in: &subscriptions)
-
-        lunch.$selectedOldLunch
-            .map { (oldUrl) -> CGFloat in
-                guard oldUrl == nil else { return 0.0 }
-                return 30.0
-            }
-            .receive(on: DispatchQueue.main)
-            .assign(to: \.lunchView.resetScheduleDateButtonHeightConstraint.constant, on: self)
             .store(in: &subscriptions)
     }
     
@@ -373,21 +353,32 @@ private extension LunchesViewController {
             let date = LunchesViewController.dateFormatter.date(from: startDateString) ?? Date()
             LunchesViewController.dateFormatter.dateFormat = "dd-MM-yyyy"
             
-            let newLunchDays: LunchDays = lunchViewModel.generateLunchDays(for: lunchDays.employees, startDate: date) ?? LunchDays.emptyDays
+            let newLunchDays: Result<LunchDays?, Error> = lunchViewModel.generateLunchDays(for: lunchDays.employees, startDate: date)
             
-            let fileName: String = "OldLunch_" + LunchesViewController.dateFormatter.string(from: newLunchDays.startDate) + "-" + LunchesViewController.dateFormatter.string(from: newLunchDays.endDate) + ".json"
-            do {
-                let jsonData = try JSONEncoder().encode(newLunchDays)
-                guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-                let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
-                do {
-                    try jsonData.write(to: pathWithFileName)
-                    print("File name: \(pathWithFileName)")
-                } catch {
-                    print("JSON data couldn't be written to file.")
+            switch newLunchDays {
+            case let .success(lunchDays):
+                guard let safeLunchDays = lunchDays else {
+                    self.handleErorr(error: LunchError.lunchDaysAreNil)
+                    return
                 }
-            } catch {
-                print("Data couldn't be encoded.")
+                
+                let fileName: String = "OldLunch_" + LunchesViewController.dateFormatter.string(from: safeLunchDays.startDate) + "-" + LunchesViewController.dateFormatter.string(from: safeLunchDays.endDate) + ".json"
+                do {
+                    let jsonData = try JSONEncoder().encode(safeLunchDays)
+                    guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+                    let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
+                    do {
+                        try jsonData.write(to: pathWithFileName)
+                        print("File name: \(pathWithFileName)")
+                    } catch let error {
+                        self.handleErorr(error: error)
+                    }
+                } catch let error {
+                    self.handleErorr(error: error)
+                }
+                
+            case let .failure(error):
+                self.handleErorr(error: error)
             }
         }
     }

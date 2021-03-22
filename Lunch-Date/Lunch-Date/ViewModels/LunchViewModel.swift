@@ -9,25 +9,68 @@ import Foundation
 import Combine
 
 enum LunchError: Error {
-    case badURL(description: String)
-    case lunchDaysAreNil(description: String)
-    case lunchDaysCouldntBeRetreived(description: String)
+    case badURL
+    case lunchDaysAreNil
+    case lunchDaysCouldntBeRetreived
+    case filterStringIsNotFound
+    case oddNumberOfEmployees
+    case notEnoughEmployees
+    case selectedOldURLNotFound
+}
+
+extension LunchError {
+    var description: String {
+        switch self {
+        case .badURL:
+            return "Bad URL. Please check given URL and/or connectivity."
+        case .lunchDaysAreNil:
+            return "Fetched lunch days didn't retreived any values (return nil)"
+        case .lunchDaysCouldntBeRetreived:
+            return "Lunch days cound't be retreived at this moment. Please check your connectivity and given data."
+        case .filterStringIsNotFound:
+            return "Filtering for selected employee is not possible for given lunch days."
+        case .oddNumberOfEmployees:
+            return "There is odd number of employees."
+        case .notEnoughEmployees:
+            return "Not enough employees (<2) for calculation."
+        case .selectedOldURLNotFound:
+            return "File for selected URL is not found."
+        }
+    }
 }
 
 class LunchViewModel: ObservableObject {
     // MARK: - Public properties
     let lunchModel: LunchModel
     @Published private (set) var shownLunchDays: Result<LunchDays?, Error> = .success(nil)
-    private (set) var oldLunches: [URL] = []
+    @Published private (set) var filterStrings: [String] = []
+    @Published private (set) var currentButtonEnabledPublisher: Bool = false
+    @Published private (set) var oldLunches: [URL] = []
+    @Published private (set) var oldLunchDays: Result<LunchDays?, Error> = .success(nil)
     
     // MARK: - Private properties
+    @Published private var filteredLunchDays: Result<LunchDays?, Error> = .success(nil) {
+        willSet {
+            var newFilters: [String] = []
+            switch newValue {
+            case let .success(lunchDays):
+                if let safeLunchDays = lunchDays, !safeLunchDays.lunchDays.isEmpty , !safeLunchDays.employees.isEmpty {
+                    newFilters.append(noneFilter)
+                    for employee in safeLunchDays.employees {
+                        newFilters.append(employee.name)
+                    }
+                }
+            default:
+                break
+            }
+            filterStrings = newFilters
+        }
+    }
     private var currentLunchDays: Result<LunchDays?, Error> = .success(nil)
-    private var oldLunchDays: Result<LunchDays?, Error> = .success(nil)
-    private var futureLunchDays: Result<LunchDays?, Error> = .success(nil)
-    private var filteredLunchDays: Result<LunchDays?, Error> = .success(nil)
     private var lastFetchedLunchDays: Result<LunchDays?, Error> = .success(nil)
     
     private var subscriptions = Set<AnyCancellable>()
+    private let noneFilter: String = "None"
     private let dayNameDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE"
@@ -37,16 +80,23 @@ class LunchViewModel: ObservableObject {
     // MARK: - Initialization
     required init(lunchModel: LunchModel = LunchModel()) {
         self.lunchModel = lunchModel
+        setupSubscribers()
     }
 }
 
 // MARK: - Subscribers
 private extension LunchViewModel {
     func setupSubscribers() {
+        setupLunchDaysSubscribers()
+        setupOldLunchesSubscribers()
+        setupCurrentButtonSubscribers()
+    }
+    
+    func setupLunchDaysSubscribers() {
         lunchModel.$employeesUrlString
             .map { (urlString: String) -> AnyPublisher<[Employee], Error> in
                 guard let url = URL(string: urlString) else {
-                    return Fail<[Employee], Error>(error: LunchError.badURL(description: "Bad URL. Please check given URL and/or connectivity."))
+                    return Fail<[Employee], Error>(error: LunchError.badURL)
                         .eraseToAnyPublisher()
                 }
                 return URLSession.shared.dataTaskPublisher(for: url)
@@ -57,13 +107,13 @@ private extension LunchViewModel {
             .flatMap { $0 }
             .map { [weak self] (employees) -> Result<LunchDays?, Error> in
                 guard let self = self else { return .success(nil) }
-                return .success(self.generateLunchDays(for: employees, startDate: self.lunchModel.startDate))
+                return self.generateLunchDays(for: employees, startDate: self.lunchModel.startDate)
             }
-            .replaceError(with: .failure(LunchError.lunchDaysCouldntBeRetreived(description: "Lunch days cound't be retreived at this moment. Please check your connectivity and given data.")))
+            .replaceError(with: .failure(LunchError.lunchDaysCouldntBeRetreived))
             .sink(receiveValue: { [weak self] (result) in
                 guard let self = self else { return }
                 self.lastFetchedLunchDays = result
-                self.shownLunchDays = result
+                self.filteredLunchDays = result
                 switch self.currentLunchDays {
                 case let .success(lunchDays):
                     if lunchDays == nil {
@@ -74,7 +124,117 @@ private extension LunchViewModel {
                 }
             })
             .store(in: &subscriptions)
+        
+        $filteredLunchDays
+            .combineLatest(lunchModel.$filterString)
+            .map { [weak self] (result, filterString) -> Result<LunchDays?, Error> in
+                guard let self = self else { return .success(nil) }
+                guard let safeFilterString = filterString, safeFilterString != self.noneFilter else { return result }
+                guard self.filterStrings.contains(safeFilterString) else {
+                    return .failure(LunchError.filterStringIsNotFound)
+                }
+                
+                var newLunchDays: LunchDays? = nil
+                switch result {
+                case let .success(lunchDays):
+                    if let safeLunchDays = lunchDays {
+                        newLunchDays = safeLunchDays
+                        var newDays: [LunchDay] = []
+                        for day in safeLunchDays.lunchDays {
+                            var newDay: LunchDay = day
+                            newDay.lunchTeams = newDay.lunchTeams.filter({ $0.firstEmployee == safeFilterString || $0.secondEmployee == safeFilterString })
+                            newDays.append(newDay)
+                        }
+                        newLunchDays?.lunchDays = newDays
+                    }
+                default:
+                    break
+                }
+                return .success(newLunchDays)
+            }
+            .sink { [weak self] (result) in
+                guard let self = self else { return }
+                self.shownLunchDays = result
+            }
+            .store(in: &subscriptions)
+        
+        $filteredLunchDays
+            .sink(receiveValue: { [weak self] (result) in
+                guard let self = self else { return }
+                
+                var enabled: Bool = false
+                var currentResult: LunchDays? = nil
+                var filteredResults: LunchDays? = nil
+                
+                switch result {
+                case let .success(newDays):
+                    filteredResults = newDays
+                default:
+                    break
+                }
+                
+                switch self.currentLunchDays {
+                case let .success(newDays):
+                    currentResult = newDays
+                default:
+                    break
+                }
+                
+                if let safeCurrentResult = currentResult {
+                    if let safeFilteredResult = filteredResults, safeFilteredResult.id == safeCurrentResult.id {
+                        enabled = false
+                    } else {
+                        enabled = true
+                    }
+                }
+                self.currentButtonEnabledPublisher = enabled
+            })
+            .store(in: &subscriptions)
     }
+    
+    func setupOldLunchesSubscribers() {
+        lunchModel.$oldLunchesURLs
+            .map { (url) -> [URL] in
+                guard let safeUrls = url, !safeUrls.isEmpty else { return [] }
+                return safeUrls
+            }
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.oldLunches, on: self)
+            .store(in: &subscriptions)
+        
+        lunchModel.$selectedOldLunch
+            .sink { [weak self] (url) in
+                guard let self = self, let safeUrl = url else { return }
+                guard let selectedURL = self.oldLunches.first(where: { $0 == safeUrl }) else {
+                    self.oldLunchDays = .failure(LunchError.selectedOldURLNotFound)
+                    return
+                }
+                do {
+                    let jsonData = try Data(contentsOf: selectedURL)
+                    let oldLunchDays = try JSONDecoder().decode(LunchDays.self, from: jsonData)
+                    self.filteredLunchDays = .success(oldLunchDays)
+                } catch let error {
+                    self.oldLunchDays = .failure(error)
+                }
+            }
+            .store(in: &subscriptions)
+    }
+    
+    func setupCurrentButtonSubscribers() {
+        lunchModel.currentButtonPublisher
+            .sink { [weak self] (_) in
+                guard let self = self else { return }
+                switch self.currentLunchDays {
+                case let .success(currentLunchDays):
+                    guard let safeCurrentDays = currentLunchDays else { return }
+                    self.filteredLunchDays = .success(safeCurrentDays)
+                case .failure(_):
+                    break
+                }
+            }
+            .store(in: &subscriptions)
+    }
+    
 }
 
 // MARK: - Helper methods
@@ -95,7 +255,7 @@ extension LunchViewModel {
         return newDate
     }
     
-    func generateLunchDays(for employees: [Employee], startDate: Date) -> LunchDays? {
+    func generateLunchDays(for employees: [Employee], startDate: Date) -> Result<LunchDays?, Error> {
         var newLunchDays: [LunchDay] = []
         var newEmployees: [Employee] = employees
         
@@ -110,15 +270,19 @@ extension LunchViewModel {
                                         secondEmployee: newEmployees[1].name)
                 let lunchDay = LunchDay(lunchTeams: [oneTeam],
                                         date: futureDate,
-                                        dayName: self.dayNameDateFormatter.string(from: Lunch.changeDateIfWeekend(date: futureDate)))
+                                        dayName: self.dayNameDateFormatter.string(from: LunchViewModel.changeDateIfWeekend(date: futureDate)))
                 endDate = futureDate
-                return LunchDays(startDate: newStartDay,
-                                 endDate: endDate,
-                                 lunchDays: [lunchDay],
-                                 employees: newEmployees)
+                let newDays = LunchDays(startDate: newStartDay,
+                                        endDate: endDate,
+                                        lunchDays: [lunchDay],employees: newEmployees)
+                return .success(newDays)
             }
             endDate = futureDate
-            return nil
+            if newEmployees.count < 2 {
+                return .failure(LunchError.notEnoughEmployees)
+            } else {
+                return .failure(LunchError.oddNumberOfEmployees)
+            }
         }
         
         newEmployees.shuffle()
@@ -147,16 +311,17 @@ extension LunchViewModel {
                 dateComponents.day = 1
             }
             futureDate = Calendar.current.date(byAdding: dateComponents, to: futureDate) ?? Date()
-            futureDate = Lunch.changeDateIfWeekend(date: futureDate)
+            futureDate = LunchViewModel.changeDateIfWeekend(date: futureDate)
             let oneLunchDay = LunchDay(lunchTeams: oneLunchDayTeams,
                                        date: futureDate,
                                        dayName: self.dayNameDateFormatter.string(from: futureDate))
             newLunchDays.append(oneLunchDay)
         }
         endDate = futureDate
-        return LunchDays(startDate: newStartDay,
-                         endDate: endDate,
-                         lunchDays: newLunchDays,
-                         employees: employees)
+        let newDays = LunchDays(startDate: newStartDay,
+                                endDate: endDate,
+                                lunchDays: newLunchDays,
+                                employees: employees)
+        return .success(newDays)
     }
 }

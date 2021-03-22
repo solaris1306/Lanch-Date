@@ -18,7 +18,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = LunchesViewController()
+        
+        let lunchModel = LunchModel(employeesUrlString: LunchesViewController.employeesUrlString,
+                                     filterString: nil,
+                                     selectedOldLunch: nil,
+                                     startDate: Date(),
+                                     oldLunchesURLs: Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil))
+        let lunchViewModel = LunchViewModel(lunchModel: lunchModel)
+        window.rootViewController = LunchesViewController(lunchModel: lunchModel, lunchViewModel: lunchViewModel)
+        
         self.window = window
         self.window?.backgroundColor = .white
         self.window?.makeKeyAndVisible()

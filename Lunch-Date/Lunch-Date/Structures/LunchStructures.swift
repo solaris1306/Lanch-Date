@@ -18,14 +18,23 @@ struct LunchDay: Codable {
     var dayName: String
 }
 
-struct LunchDays: Codable {
+struct LunchDays: Codable, Identifiable {
+    let id: UUID
     var startDate: Date
     var endDate: Date
     var lunchDays: [LunchDay]
     var employees: [Employee]
     
-    public static let emptyDays = LunchDays(startDate: Date(),
-                                            endDate: Date(),
-                                            lunchDays: [],
-                                            employees: [])
+    // MARK: - Intialization
+    init(id: UUID = UUID(),
+                  startDate: Date = Date(),
+                  endDate: Date = Date(),
+                  lunchDays: [LunchDay] = [],
+                  employees: [Employee] = []) {
+        self.id = id
+        self.startDate = startDate
+        self.endDate = endDate
+        self.lunchDays = lunchDays
+        self.employees = employees
+    }
 }

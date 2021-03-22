@@ -179,11 +179,11 @@ class LunchesView: UIView {
         return label
     }()
     
-    let scheduleDateResetButton: UIButton = {
+    let scheduleDateCurrentButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.backgroundColor = .white
-        button.setTitle("RESET", for: .normal)
+        button.setTitle("CURRENT", for: .normal)
         button.setTitleColor(.black, for: .normal)
         button.setTitleColor(.lightGray, for: .disabled)
         button.titleLabel?.font = .boldSystemFont(ofSize: 20)
@@ -427,12 +427,12 @@ private extension LunchesView {
     }
     
     func setupScheduleDateStackView() {
-        resetScheduleDateButtonHeightConstraint = scheduleDateResetButton.heightAnchor.constraint(equalToConstant: 0.0)
+        resetScheduleDateButtonHeightConstraint = scheduleDateCurrentButton.heightAnchor.constraint(equalToConstant: 0.0)
         setScheduleDateButtonHeightConstraint = scheduleDateSetButton.heightAnchor.constraint(equalToConstant: 0.0)
         resetScheduleDateButtonHeightConstraint.isActive = true
         setScheduleDateButtonHeightConstraint.isActive = true
         
-        scheduleDateButtonStackView.addArrangedSubview(scheduleDateResetButton)
+        scheduleDateButtonStackView.addArrangedSubview(scheduleDateCurrentButton)
         scheduleDateButtonStackView.addArrangedSubview(scheduleDateSetButton)
         
         scheduleDateStackView.addArrangedSubview(scheduleDateLabel)
