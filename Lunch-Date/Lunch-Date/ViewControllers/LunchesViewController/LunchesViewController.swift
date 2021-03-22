@@ -37,6 +37,8 @@ class LunchesViewController: UIViewController {
     private var subscriptions = Set<AnyCancellable>()
     private var lunchDays: LunchDays = LunchDays() {
         didSet {
+            self.lunchView.newScheduleButton.isEnabled = !lunchDays.employees.isEmpty
+            self.lunchView.saveButton.isEnabled = !lunchDays.lunchDays.isEmpty
             self.lunchView.tableView.reloadData()
         }
     }
@@ -93,7 +95,7 @@ extension LunchesViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         guard lunchDays.lunchDays.indices.contains(section) else {
-            handleErorr(error: LunchViewControllerErrors.numberOfRowsInSectionError)
+            handleError(error: LunchViewControllerErrors.numberOfRowsInSectionError)
             return 0
         }
         return lunchDays.lunchDays[section].lunchTeams.count
@@ -101,11 +103,11 @@ extension LunchesViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: String(describing: LunchTeamCell.self), for: indexPath) as? LunchTeamCell else {
-            handleErorr(error: LunchViewControllerErrors.lunchTeamCellDequeuError)
+            handleError(error: LunchViewControllerErrors.lunchTeamCellDequeuError)
             return UITableViewCell()
         }
         guard lunchDays.lunchDays.indices.contains(indexPath.section), lunchDays.lunchDays[indexPath.section].lunchTeams.indices.contains(indexPath.row) else {
-            handleErorr(error: LunchViewControllerErrors.cellForRowAtError)
+            handleError(error: LunchViewControllerErrors.cellForRowAtError)
             return cell
         }
         let oneTeam: LunchTeam = lunchDays.lunchDays[indexPath.section].lunchTeams[indexPath.row]
@@ -185,11 +187,11 @@ private extension LunchesViewController {
             do {
                 try jsonData.write(to: pathWithFileName)
                 print("File name: \(pathWithFileName)")
-            } catch {
-                print("JSON data couldn't be written to file.")
+            } catch let error {
+                self.handleError(error: error)
             }
         } catch {
-            print("Data couldn't be encoded.")
+            self.handleError(error: error)
         }
     }
     
@@ -234,23 +236,10 @@ private extension LunchesViewController {
 
 // MARK: - Error handling
 private extension LunchesViewController {
-    func handleErorr(error: Error) {
-        var message = "Message"
-        var dismissClosure: (() -> ())? = nil
+    func handleError(error: Error) {
+        var message = "Error message"
         if let lunchError = error as? LunchError {
             message = lunchError.description
-            switch lunchError {
-            case .filterStringIsNotFound:
-                dismissClosure = {
-                    self.lunchModel.filterString = nil
-                }
-            case .selectedOldURLNotFound:
-                dismissClosure = {
-                    self.lunchModel.selectedOldLunch = nil
-                }
-            default:
-                break
-            }
         } else if let lunchControllerError = error as? LunchViewControllerErrors {
             message = lunchControllerError.description
         } else {
@@ -258,8 +247,11 @@ private extension LunchesViewController {
         }
         
         DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
             let alertController = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
-            self?.present(alertController, animated: true, completion: dismissClosure)
+            let alertAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+            alertController.addAction(alertAction)
+            self.present(alertController, animated: true, completion: nil)
         }
     }
 }
@@ -272,15 +264,21 @@ private extension LunchesViewController {
                 guard let self = self else { return }
                 switch result {
                 case let .success(newLunchDays):
+                    if newLunchDays == nil && self.lunchModel.filterString != nil {
+                        self.filterIsDisabled()
+                    }
                     let goodDays = newLunchDays ?? LunchDays()
                     DispatchQueue.main.async {
                         self.lunchDays = goodDays
                     }
                 case let .failure(error):
+                    if self.lunchModel.filterString != nil {
+                        self.filterIsDisabled()
+                    }
                     DispatchQueue.main.async {
                         self.lunchDays = LunchDays()
                     }
-                    self.handleErorr(error: error)
+                    self.handleError(error: error)
                 }
             }
             .store(in: &subscriptions)
@@ -291,42 +289,10 @@ private extension LunchesViewController {
             .assign(to: \.lunchView.filterButton.isEnabled, on: self)
             .store(in: &subscriptions)
         
-        lunchModel.$filterString
-            .sink { [weak self] (filterString) in
-                guard let self = self else { return }
-                guard let safeFilterString = filterString else {
-                    self.lunchView.filterLabel.text = nil
-                    self.lunchView.resetButtonHeightConstraint.constant = 0.0
-                    return
-                }
-                self.lunchView.filterLabel.text = "Filtered employee: \(safeFilterString)"
-                self.lunchView.resetButtonHeightConstraint.constant = 30.0
-            }
-            .store(in: &subscriptions)
-        
         lunchViewModel.$oldLunches
             .map({ !$0.isEmpty })
             .receive(on: DispatchQueue.main)
             .assign(to: \.lunchView.loadButton.isEnabled, on: self)
-            .store(in: &subscriptions)
-        
-        lunchModel.$selectedOldLunch
-            .sink { [weak self] (url) in
-                guard let self = self else { return }
-                guard let safeURL = url else {
-                    self.lunchView.newScheduleButton.isEnabled = true
-                    self.lunchView.loadLabel.text = nil
-                    self.lunchView.loadResetButtonHeightConstraint.constant = 0.0
-                    self.lunchView.setScheduleDateButtonHeightConstraint.constant = 30.0
-                    self.lunchView.resetScheduleDateButtonHeightConstraint.constant = 30.0
-                    return
-                }
-                self.lunchView.newScheduleButton.isEnabled = true
-                self.lunchView.loadLabel.text = "Loaded lunch: \(safeURL.lastPathComponent)"
-                self.lunchView.setScheduleDateButtonHeightConstraint.constant = 0.0
-                self.lunchView.resetScheduleDateButtonHeightConstraint.constant = 0.0
-                self.lunchView.loadResetButtonHeightConstraint.constant = 30.0
-            }
             .store(in: &subscriptions)
         
         lunchViewModel.$currentButtonEnabledPublisher
@@ -343,10 +309,15 @@ private extension LunchesViewController {
             .sink { [weak self] (result) in
                 guard let self = self else { return }
                 switch result {
-                case .success(_):
-                    break
+                case let .success(lunchDays):
+                    guard let _ = lunchDays else {
+                        self.oldUrlIsDeselected()
+                        break
+                    }
+                    self.oldUrlIsSelected()
                 case let .failure(error):
-                    self.handleErorr(error: error)
+                    self.oldUrlIsDeselected()
+                    self.handleError(error: error)
                 }
             }
             .store(in: &subscriptions)
@@ -379,6 +350,39 @@ private extension LunchesViewController {
         lunchView.scheduleDateStackView.isHidden = !lunchView.scheduleDateStackView.isHidden
     }
     
+    func oldUrlIsSelected() {
+        self.lunchView.newScheduleButton.isEnabled = false
+        if let safeURL = self.lunchModel.selectedOldLunch {
+            self.lunchView.loadLabel.text = "Loaded lunch: \(safeURL.lastPathComponent)"
+        }
+        self.lunchView.setScheduleDateButtonHeightConstraint.constant = 0.0
+        self.lunchView.resetScheduleDateButtonHeightConstraint.constant = 0.0
+        self.lunchView.loadResetButtonHeightConstraint.constant = 30.0
+    }
+    
+    func oldUrlIsDeselected() {
+        self.lunchModel.selectedOldLunch = nil
+        self.lunchView.newScheduleButton.isEnabled = !self.lunchDays.employees.isEmpty
+        self.lunchView.loadLabel.text = nil
+        self.lunchView.loadResetButtonHeightConstraint.constant = 0.0
+        self.lunchView.setScheduleDateButtonHeightConstraint.constant = 30.0
+        self.lunchView.resetScheduleDateButtonHeightConstraint.constant = 30.0
+    }
+    
+    func filterIsEnabled() {
+        if let safeFilterString = self.lunchModel.filterString {
+            self.lunchView.filterLabel.text = "Filtered employee: \(safeFilterString)"
+        }
+        self.lunchView.resetButtonHeightConstraint.constant = 30.0
+    }
+    
+    func filterIsDisabled() {
+        self.lunchModel.filterString = nil
+        self.lunchView.filterLabel.text = nil
+        self.lunchView.resetButtonHeightConstraint.constant = 0.0
+        
+    }
+    
     func generateOldLunches() {
         for i in 1...12 {
             var monthString = ""
@@ -398,7 +402,7 @@ private extension LunchesViewController {
             switch newLunchDays {
             case let .success(lunchDays):
                 guard let safeLunchDays = lunchDays else {
-                    self.handleErorr(error: LunchError.lunchDaysAreNil)
+                    self.handleError(error: LunchError.lunchDaysAreNil)
                     return
                 }
                 
@@ -411,14 +415,14 @@ private extension LunchesViewController {
                         try jsonData.write(to: pathWithFileName)
                         print("File name: \(pathWithFileName)")
                     } catch let error {
-                        self.handleErorr(error: error)
+                        self.handleError(error: error)
                     }
                 } catch let error {
-                    self.handleErorr(error: error)
+                    self.handleError(error: error)
                 }
                 
             case let .failure(error):
-                self.handleErorr(error: error)
+                self.handleError(error: error)
             }
         }
     }
