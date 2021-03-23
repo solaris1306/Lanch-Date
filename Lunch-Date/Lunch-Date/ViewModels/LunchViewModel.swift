@@ -281,6 +281,7 @@ private extension LunchViewModel {
                 case let .success(currentLunchDays):
                     guard let safeCurrentDays = currentLunchDays else { return }
                     self.filteredLunchDays = .success(safeCurrentDays)
+                    self.lastFetchedLunchDays = .success(safeCurrentDays)
                 case .failure(_):
                     break
                 }
