@@ -207,7 +207,9 @@ private extension LunchViewModel {
                     currentButtonEnabled = false
                 }
                 
-                if let safeCurrentResult = currentResult, let safeFilteredResult = filteredResults, safeFilteredResult.id == safeCurrentResult.id {
+                if let safeCurrentResult = currentResult,
+                   let safeFilteredResult = filteredResults,
+                   safeFilteredResult.id == safeCurrentResult.id {
                     currentButtonEnabled = false
                 }
                 self.currentButtonEnabled = currentButtonEnabled
@@ -220,7 +222,8 @@ private extension LunchViewModel {
                 }
                 if let safeFilteredResult = filteredResults {
                     newScheduleEnabled = !safeFilteredResult.employees.isEmpty
-                    if let safeOldResult = oldResults, safeFilteredResult.id == safeOldResult.id {
+                    if let safeOldResult = oldResults,
+                       safeFilteredResult.id == safeOldResult.id {
                         newScheduleEnabled = false
                     }
                 }
@@ -234,7 +237,8 @@ private extension LunchViewModel {
         lunchModel.$oldLunchesURLs
             .map { (url) -> [URL] in
                 guard let safeUrls = url, !safeUrls.isEmpty else { return [] }
-                if let safePreviousURL = self.previousOldURL, !safeUrls.contains(where: { $0 == safePreviousURL }) {
+                if let safePreviousURL = self.previousOldURL,
+                   !safeUrls.contains(where: { $0 == safePreviousURL }) {
                     self.previousOldURL = nil
                 }
                 return safeUrls
