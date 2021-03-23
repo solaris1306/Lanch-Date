@@ -45,13 +45,15 @@ class LunchViewModel: ObservableObject {
     
     // MARK: - Published public properties
     @Published private (set) var shownLunchDays: Result<LunchDays?, Error> = .success(nil)
-    @Published private (set) var filterStrings: [String] = []
-    @Published private (set) var currentButtonEnabled: Bool = false
-    @Published private (set) var oldLunches: [URL] = []
     @Published private (set) var oldLunchDays: Result<LunchDays?, Error> = .success(nil)
+    @Published private (set) var oldLunches: [URL] = []
     @Published private (set) var oldLunchDaysURL: URL? = nil
-    @Published private (set) var newScheduleEnabled: Bool = true
+    private (set) var previousOldURL: URL? = nil
+    @Published private (set) var filterStrings: [String] = []
     @Published private (set) var scheduleDateLabelText: String? = nil
+    @Published private (set) var newScheduleEnabled: Bool = true
+    @Published private (set) var currentButtonEnabled: Bool = false
+    @Published private (set) var loadResetButtonEnabled: Bool = false
     
     // MARK: - Private properties
     @Published private var filteredLunchDays: Result<LunchDays?, Error> = .success(nil) {
@@ -94,7 +96,7 @@ private extension LunchViewModel {
     func setupSubscribers() {
         setupLunchDaysSubscribers()
         setupOldLunchesSubscribers()
-        setupCurrentButtonSubscribers()
+        setupCurrentAndLoadResetButtonSubscribers()
     }
     
     func setupLunchDaysSubscribers() {
@@ -127,6 +129,22 @@ private extension LunchViewModel {
                 default:
                     break
                 }
+                var loadResetButtonCurrentPart: Bool = true
+                var loadResetButtonLastFetchedPart: Bool = true
+                
+                switch self.lastFetchedLunchDays {
+                case let .success(newDays):
+                    loadResetButtonLastFetchedPart = newDays != nil
+                case .failure(_):
+                    loadResetButtonLastFetchedPart = false
+                }
+                switch self.currentLunchDays {
+                case let .success(newDays):
+                    loadResetButtonCurrentPart = newDays != nil
+                case .failure(_):
+                    loadResetButtonCurrentPart = false
+                }
+                self.loadResetButtonEnabled = loadResetButtonCurrentPart && loadResetButtonLastFetchedPart
             })
             .store(in: &subscriptions)
         
@@ -188,6 +206,7 @@ private extension LunchViewModel {
                 case .failure(_):
                     currentButtonEnabled = false
                 }
+                
                 if let safeCurrentResult = currentResult, let safeFilteredResult = filteredResults, safeFilteredResult.id == safeCurrentResult.id {
                     currentButtonEnabled = false
                 }
@@ -215,6 +234,9 @@ private extension LunchViewModel {
         lunchModel.$oldLunchesURLs
             .map { (url) -> [URL] in
                 guard let safeUrls = url, !safeUrls.isEmpty else { return [] }
+                if let safePreviousURL = self.previousOldURL, !safeUrls.contains(where: { $0 == safePreviousURL }) {
+                    self.previousOldURL = nil
+                }
                 return safeUrls
             }
             .receive(on: DispatchQueue.main)
@@ -225,7 +247,10 @@ private extension LunchViewModel {
             .sink { [weak self] (url) in
                 guard let self = self else { return }
                 self.oldLunchDaysURL = url
-                guard let safeUrl = url else { return }
+                guard let safeUrl = url else {
+                    self.previousOldURL = nil
+                    return
+                }
                 guard let selectedURL = self.oldLunches.first(where: { $0 == safeUrl }) else {
                     self.oldLunchDays = .failure(LunchError.selectedOldURLNotFound)
                     return
@@ -236,6 +261,7 @@ private extension LunchViewModel {
                     let result: Result<LunchDays?, Error> = .success(oldLunchDays)
                     self.oldLunchDays = result
                     self.filteredLunchDays = self.oldLunchDays
+                    self.previousOldURL = safeUrl
                 } catch let error {
                     self.oldLunchDays = .failure(error)
                 }
@@ -243,7 +269,7 @@ private extension LunchViewModel {
             .store(in: &subscriptions)
     }
     
-    func setupCurrentButtonSubscribers() {
+    func setupCurrentAndLoadResetButtonSubscribers() {
         lunchModel.currentButtonPublisher
             .sink { [weak self] (_) in
                 guard let self = self else { return }
@@ -251,6 +277,19 @@ private extension LunchViewModel {
                 case let .success(currentLunchDays):
                     guard let safeCurrentDays = currentLunchDays else { return }
                     self.filteredLunchDays = .success(safeCurrentDays)
+                case .failure(_):
+                    break
+                }
+            }
+            .store(in: &subscriptions)
+        
+        lunchModel.loadResetButtonPublisher
+            .sink { [weak self] (_) in
+                guard let self = self else { return }
+                switch self.lastFetchedLunchDays {
+                case let .success(lastFetchedDays):
+                    guard let safeLastFetchedDays = lastFetchedDays else { return }
+                    self.filteredLunchDays = .success(safeLastFetchedDays)
                 case .failure(_):
                     break
                 }

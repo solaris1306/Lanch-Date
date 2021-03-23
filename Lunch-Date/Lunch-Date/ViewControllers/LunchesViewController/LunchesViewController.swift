@@ -161,7 +161,7 @@ private extension LunchesViewController {
     
     @objc func loadResetAction() {
         lunchModel.selectedOldLunch = nil
-        currentScheduleDateAction()
+        lunchModel.loadResetButtonPublisher.send(())
     }
     
     @objc func loadOldLunchesAction() {
@@ -296,8 +296,13 @@ private extension LunchesViewController {
                 case .success(_):
                     break
                 case let .failure(error):
-                    self.oldUrlIsDeselected()
+                    if self.lunchView.loadResetButton.isEnabled || (!self.lunchView.loadResetButton.isEnabled && self.lunchViewModel.previousOldURL == nil) {
+                        self.oldUrlIsDeselected()
+                    }
                     self.handleError(error: error)
+                    if let safePreviousURL = self.lunchViewModel.previousOldURL {
+                        self.lunchModel.selectedOldLunch = safePreviousURL
+                    }
                 }
             }
             .store(in: &subscriptions)
@@ -326,6 +331,11 @@ private extension LunchesViewController {
         lunchViewModel.$scheduleDateLabelText
             .receive(on: DispatchQueue.main)
             .assign(to: \.lunchView.scheduleDateLabel.text, on: self)
+            .store(in: &subscriptions)
+        
+        lunchViewModel.$loadResetButtonEnabled
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.lunchView.loadResetButton.isEnabled, on: self)
             .store(in: &subscriptions)
     }
 }
@@ -391,7 +401,6 @@ private extension LunchesViewController {
             let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
             do {
                 try jsonData.write(to: pathWithFileName)
-                print("File name: \(pathWithFileName)")
             } catch let error {
                 self.handleError(error: error)
             }
@@ -430,7 +439,6 @@ private extension LunchesViewController {
                     let pathWithFileName: URL = documentsDirectory.appendingPathComponent(fileName)
                     do {
                         try jsonData.write(to: pathWithFileName)
-                        print("File name: \(pathWithFileName)")
                     } catch let error {
                         self.handleError(error: error)
                     }

@@ -16,6 +16,7 @@ class LunchModel: ObservableObject {
     @Published var startDate: Date
     @Published var oldLunchesURLs: [URL]? = nil
     var currentButtonPublisher = PassthroughSubject<Void, Never>()
+    var loadResetButtonPublisher = PassthroughSubject<Void, Never>()
     
     // MARK: - Initialization
     required init(employeesUrlString: String = "",
